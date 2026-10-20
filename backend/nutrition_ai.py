@@ -1,8 +1,12 @@
 """Запросы к бесплатному LLM (Groq или Google Gemini)."""
 
+import asyncio
 import os
 
 import aiohttp
+
+_GEMINI_RETRY_STATUSES = frozenset({429, 500, 503})
+_GEMINI_MAX_RETRIES = 2
 
 SYSTEM_PROMPT = """Ты — дружелюбный помощник по питанию в приложении «Калькулятор калорий».
 Отвечай по-русски, кратко и по делу (обычно 3–8 предложений).
@@ -73,7 +77,12 @@ async def _ask_gemini(
     if not api_key:
         raise RuntimeError("Не задан GEMINI_API_KEY в .env (aistudio.google.com)")
 
-    model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
+    custom_model = os.getenv("GEMINI_MODEL", "").strip()
+    # Одна быстрая модель по умолчанию; запасные — только если 404/503
+    models = [custom_model] if custom_model else [
+        "gemini-3.5-flash-lite",
+        "gemini-3.5-flash",
+    ]
     parts = [SYSTEM_PROMPT]
     if context_text:
         parts.append(f"Контекст из приложения:\n{context_text}")
@@ -87,19 +96,47 @@ async def _ask_gemini(
     parts.append(f"Пользователь: {user_message}")
     prompt = "\n\n".join(parts)
 
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        f"?key={api_key}"
-    )
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {
+            "maxOutputTokens": int(os.getenv("GEMINI_MAX_OUTPUT_TOKENS", "400")),
+            "temperature": 0.5,
+        },
+    }
+    last_error: str | None = None
 
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=60)) as resp:
-            data = await resp.json()
-            if resp.status != 200:
-                raise RuntimeError(f"Gemini API: {data}")
-            candidates = data.get("candidates") or []
-            if not candidates:
-                raise RuntimeError("Gemini: пустой ответ")
-            text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-            return (text or "").strip()
+        for model in models:
+            url = (
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+                f"?key={api_key}"
+            )
+            for attempt in range(_GEMINI_MAX_RETRIES):
+                async with session.post(
+                    url, json=payload, timeout=aiohttp.ClientTimeout(total=90)
+                ) as resp:
+                    data = await resp.json()
+                    if resp.status == 404:
+                        last_error = str(data)
+                        break
+                    if resp.status in _GEMINI_RETRY_STATUSES:
+                        last_error = str(data)
+                        if attempt + 1 < _GEMINI_MAX_RETRIES:
+                            await asyncio.sleep(1.5 * (attempt + 1))
+                            continue
+                        break
+                    if resp.status != 200:
+                        raise RuntimeError(f"Gemini API: {data}")
+                    candidates = data.get("candidates") or []
+                    if not candidates:
+                        raise RuntimeError("Gemini: пустой ответ")
+                    text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                    return (text or "").strip()
+
+    err = (last_error or "").lower()
+    if "503" in err or "high demand" in err or "unavailable" in err:
+        raise RuntimeError(
+            "Сервер Google Gemini перегружен (бесплатный тариф). "
+            "Подождите 1–2 минуты и нажмите «Спросить» снова."
+        )
+    raise RuntimeError(f"Gemini: не удалось получить ответ. {last_error or 'нет модели'}")

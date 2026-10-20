@@ -24,7 +24,15 @@ BOT_TOKEN = os.getenv("BOT_TOKEN", "").strip()
 WEBAPP_URL = os.getenv("WEBAPP_URL", "").strip()
 PROXY_URL = os.getenv("PROXY_URL", "").strip() or None
 PUBLIC_API_URL = os.getenv("PUBLIC_API_URL", "").strip().rstrip("/")
+AI_PROVIDER = (os.getenv("AI_PROVIDER") or "groq").strip().lower()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+
+
+def ai_is_configured() -> bool:
+    if AI_PROVIDER == "gemini":
+        return bool(GEMINI_API_KEY)
+    return bool(GROQ_API_KEY)
 
 if not BOT_TOKEN:
     raise RuntimeError("Не найден BOT_TOKEN. Создайте файл .env по образцу .env.example")
@@ -84,10 +92,11 @@ async def cmd_ask(message: Message) -> None:
             reply_markup=webapp_keyboard(),
         )
         return
-    if not GROQ_API_KEY:
+    if not ai_is_configured():
         await message.answer(
-            "ИИ не настроен: добавьте GROQ_API_KEY в backend/.env "
-            "(бесплатно: console.groq.com/keys)",
+            "ИИ не настроен. В backend/.env укажите:\n"
+            "• Google Gemini: AI_PROVIDER=gemini и GEMINI_API_KEY (aistudio.google.com/apikey)\n"
+            "• или Groq: GROQ_API_KEY (если регистрация доступна)",
             reply_markup=webapp_keyboard(),
         )
         return
@@ -120,10 +129,11 @@ async def main() -> None:
     from api_server import start_api_server
 
     api_runner = await start_api_server(BOT_TOKEN)
-    if GROQ_API_KEY:
-        print("ИИ: Groq подключён (/ask и чат в Mini App).")
+    if ai_is_configured():
+        name = "Gemini" if AI_PROVIDER == "gemini" else "Groq"
+        print(f"ИИ: {name} подключён (/ask и чат в Mini App).")
     else:
-        print("ИИ: задайте GROQ_API_KEY в .env (console.groq.com/keys).")
+        print("ИИ: задайте Gemini (aistudio.google.com/apikey) или Groq в .env.")
     if PUBLIC_API_URL:
         print(f"Mini App API: {PUBLIC_API_URL}")
     print("Бот запущен. Нажми Ctrl+C чтобы остановить.")

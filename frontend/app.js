@@ -2,9 +2,15 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { sendNutritionQuestion, resolveAiApiBase, saveAiApiBase } from "./ai-chat.js?v=12";
-import { computeTargets } from "./calc.js?v=12";
-import { searchFoods } from "./food-api.js?v=12";
+import {
+  sendNutritionQuestion,
+  resolveAiApiBase,
+  saveAiApiBase,
+  loadAiApiConfig,
+  ensureAiApiBase,
+} from "./ai-chat.js?v=13";
+import { computeTargets } from "./calc.js?v=13";
+import { searchFoods } from "./food-api.js?v=13";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -12,9 +18,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=12";
+} from "./meals.js?v=13";
 
-const APP_VERSION = "12";
+const APP_VERSION = "13";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -520,12 +526,13 @@ function setAiStatus(text, visible = true) {
   els.aiStatus.hidden = !visible || !text;
 }
 
-function openAiModal() {
+async function openAiModal() {
   els.aiModal.hidden = false;
   document.body.classList.add("modal-open");
-  if (!resolveAiApiBase()) {
+  await loadAiApiConfig();
+  if (!(await ensureAiApiBase())) {
     setAiStatus(
-      "Укажите в ссылке Mini App параметр api= (HTTPS-адрес бота, например Fly.io).",
+      "Задайте PUBLIC_API_URL в .env бота (и перезапуск) или apiBase в ai-api.json на GitHub, или Профиль → Сервер ИИ.",
       true
     );
   } else if (!tg?.initData) {
@@ -556,7 +563,7 @@ async function submitAiQuestion(e) {
   aiHistory.push({ role: "user", content: message });
   els.aiInput.value = "";
   els.aiSendBtn.disabled = true;
-  setAiStatus("Думаю…", true);
+  setAiStatus("Думаю… обычно 10–40 сек (бесплатный ИИ Google)", true);
 
   try {
     const reply = await sendNutritionQuestion({
@@ -583,7 +590,7 @@ els.aiCloseBtn.addEventListener("click", closeAiModal);
 els.aiBackdrop.addEventListener("click", closeAiModal);
 els.aiForm.addEventListener("submit", submitAiQuestion);
 
-resolveAiApiBase();
+loadAiApiConfig();
 
 if (els.appVersion) {
   els.appVersion.textContent = `Версия ${APP_VERSION}`;
