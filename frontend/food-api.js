@@ -25,13 +25,27 @@ export function normalizeProduct(raw) {
   const name = String(raw.product_name || raw.generic_name || "Без названия").trim();
   const brand = raw.brands ? String(raw.brands).split(",")[0].trim() : "";
 
+  const kcal100 = Math.round(pickKcal(n));
+  const protein100 = round1(num(n.proteins_100g) || num(n.proteins));
+  const fat100 = round1(num(n.fat_100g) || num(n.fat));
+  let carbs100 = round1(
+    num(n.carbohydrates_100g) ||
+      num(n.carbohydrates) ||
+      num(n["carbohydrates-value"])
+  );
+
+  if (carbs100 <= 0 && kcal100 > 0) {
+    const fromKcal = (kcal100 - protein100 * 4 - fat100 * 9) / 4;
+    if (fromKcal > 0) carbs100 = round1(fromKcal);
+  }
+
   return {
     id: String(raw.code || raw._id || name),
     name: brand ? `${name} (${brand})` : name,
-    kcal100: Math.round(pickKcal(n)),
-    protein100: round1(num(n.proteins_100g)),
-    fat100: round1(num(n.fat_100g)),
-    carbs100: round1(num(n.carbohydrates_100g)),
+    kcal100,
+    protein100,
+    fat100,
+    carbs100,
   };
 }
 

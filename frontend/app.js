@@ -2,8 +2,8 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=6";
-import { searchFoods } from "./food-api.js?v=6";
+import { computeTargets } from "./calc.js?v=7";
+import { searchFoods } from "./food-api.js?v=7";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -249,7 +249,8 @@ async function runFoodSearch(query) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "search-results__item";
-      btn.textContent = `${item.name} — ${item.kcal100} ккал / 100 г`;
+      btn.textContent =
+        `${item.name} — ${item.kcal100} ккал · Б${item.protein100} Ж${item.fat100} У${item.carbs100} /100г`;
       btn.addEventListener("click", () => selectProductFromDb(item));
       li.appendChild(btn);
       els.foodSearchResults.appendChild(li);
