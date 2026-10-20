@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Калькулятор калорий</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <p class="brand">CalorieApp</p>
+      <h1>Сегодня</h1>
+    </header>
+
+    <section class="totals" aria-label="Итоги за день">
+      <div class="calories">
+        <span class="calories__value" id="totalCalories">0</span>
+        <span class="calories__label">ккал</span>
+      </div>
+      <div class="macros">
+        <div class="macro">
+          <span class="macro__value" id="totalProtein">0</span>
+          <span class="macro__label">Белки</span>
+        </div>
+        <div class="macro">
+          <span class="macro__value" id="totalFat">0</span>
+          <span class="macro__label">Жиры</span>
+        </div>
+        <div class="macro">
+          <span class="macro__value" id="totalCarbs">0</span>
+          <span class="macro__label">Углеводы</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="foods" aria-label="Список продуктов">
+      <div class="foods__head">
+        <h2>Приёмы пищи</h2>
+        <button type="button" class="btn btn--primary" id="addFoodBtn">+ Добавить</button>
+      </div>
+      <ul class="food-list" id="foodList"></ul>
+      <p class="empty" id="emptyState">Пока пусто. Добавьте первый продукт.</p>
+    </section>
+  </div>
+
+  <!-- Модальное окно добавления еды -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal__backdrop" id="modalBackdrop"></div>
+    <div class="modal__sheet" role="dialog" aria-labelledby="modalTitle">
+      <h2 id="modalTitle">Новый продукт</h2>
+      <form id="foodForm">
+        <label class="field">
+          <span>Название</span>
+          <input type="text" name="name" placeholder="Например, овсянка" required autocomplete="off" />
+        </label>
+        <label class="field">
+          <span>Калории (ккал)</span>
+          <input type="number" name="calories" min="0" step="1" placeholder="250" required />
+        </label>
+        <div class="field-row">
+          <label class="field">
+            <span>Белки (г)</span>
+            <input type="number" name="protein" min="0" step="0.1" placeholder="10" value="0" />
+          </label>
+          <label class="field">
+            <span>Жиры (г)</span>
+            <input type="number" name="fat" min="0" step="0.1" placeholder="5" value="0" />
+          </label>
+          <label class="field">
+            <span>Углеводы (г)</span>
+            <input type="number" name="carbs" min="0" step="0.1" placeholder="40" value="0" />
+          </label>
+        </div>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="cancelBtn">Отмена</button>
+          <button type="submit" class="btn btn--primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# Деплой бота на Fly.io (бесплатный лимит для маленьких приложений)
+# Команды: fly auth login → fly launch → fly secrets set ...
+
+app = 'calorie-bot'
+primary_region = 'ams'
+
+[build]
+  dockerfile = 'Dockerfile'
+
+[env]
+  # BOT_TOKEN и WEBAPP_URL задаются через: fly secrets set ...
+
+[[vm]]
+  memory = '256mb'
+  cpu_kind = 'shared'
+  cpus = 1

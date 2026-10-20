@@ -1,0 +1,17 @@
+# Деплой на Render: New → Blueprint → подключить репозиторий с этим файлом
+# Или создайте Background Worker вручную (см. CLOUD-BOT.md)
+
+services:
+  - type: worker
+    name: calorie-bot
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
+      - key: PROXY_URL
+        sync: false
