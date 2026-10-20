@@ -10,9 +10,38 @@
 <body>
   <div class="app">
     <header class="header">
-      <p class="brand">CalorieApp</p>
-      <h1>Сегодня</h1>
+      <div class="header__row">
+        <div>
+          <p class="brand">CalorieApp</p>
+          <h1>Сегодня</h1>
+        </div>
+        <button type="button" class="btn btn--outline" id="profileBtn">Профиль</button>
+      </div>
     </header>
+
+    <section class="targets" id="targetsSection" hidden aria-label="Ваша норма">
+      <p class="targets__title">Норма на день</p>
+      <div class="targets__grid">
+        <div class="target-pill">
+          <span class="target-pill__label">Ккал</span>
+          <span class="target-pill__value" id="targetCalories">—</span>
+          <span class="target-pill__sub" id="remainingCalories"></span>
+        </div>
+        <div class="target-pill">
+          <span class="target-pill__label">Белки</span>
+          <span class="target-pill__value" id="targetProtein">—</span>
+        </div>
+        <div class="target-pill">
+          <span class="target-pill__label">Жиры</span>
+          <span class="target-pill__value" id="targetFat">—</span>
+        </div>
+        <div class="target-pill">
+          <span class="target-pill__label">Углев.</span>
+          <span class="target-pill__value" id="targetCarbs">—</span>
+        </div>
+      </div>
+      <p class="targets__hint" id="targetsHint"></p>
+    </section>
 
     <section class="totals" aria-label="Итоги за день">
       <div class="calories">
@@ -81,6 +110,79 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Профиль и расчёт нормы -->
+  <div class="modal" id="profileModal" hidden>
+    <div class="modal__backdrop" id="profileBackdrop"></div>
+    <div class="modal__sheet modal__sheet--scroll" role="dialog" aria-labelledby="profileTitle">
+      <h2 id="profileTitle">Профиль</h2>
+      <p class="modal__lead">Заполните данные — рассчитаем калории и БЖУ на день.</p>
+      <form id="profileForm">
+        <label class="field">
+          <span>Пол</span>
+          <select name="sex" required>
+            <option value="male">Мужской</option>
+            <option value="female">Женский</option>
+          </select>
+        </label>
+        <div class="field-row field-row--2">
+          <label class="field">
+            <span>Возраст</span>
+            <input type="number" name="age" min="14" max="99" required placeholder="25" />
+          </label>
+          <label class="field">
+            <span>Вес (кг)</span>
+            <input type="number" name="weightKg" min="30" max="300" step="0.1" required placeholder="70" />
+          </label>
+        </div>
+        <label class="field">
+          <span>Рост (см)</span>
+          <input type="number" name="heightCm" min="120" max="230" required placeholder="175" />
+        </label>
+        <p class="field-group-title">Обхваты (см) — для оценки % жира</p>
+        <div class="field-row field-row--3">
+          <label class="field">
+            <span>Шея</span>
+            <input type="number" name="neckCm" min="20" max="60" step="0.1" placeholder="38" />
+          </label>
+          <label class="field">
+            <span>Грудь</span>
+            <input type="number" name="chestCm" min="60" max="200" step="0.1" placeholder="95" />
+          </label>
+          <label class="field">
+            <span>Талия</span>
+            <input type="number" name="waistCm" min="50" max="200" step="0.1" placeholder="80" />
+          </label>
+        </div>
+        <label class="field field--hips" id="hipsField" hidden>
+          <span>Бёдра (см) — для женщин в формуле % жира</span>
+          <input type="number" name="hipsCm" min="60" max="200" step="0.1" placeholder="95" />
+        </label>
+        <label class="field">
+          <span>Активность</span>
+          <select name="activity" required>
+            <option value="low">Мало двигаюсь</option>
+            <option value="light">Лёгкая (1–3 тренировки)</option>
+            <option value="moderate" selected>Средняя (3–5)</option>
+            <option value="high">Высокая (6–7)</option>
+            <option value="athlete">Очень высокая</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Цель</span>
+          <select name="goal" required>
+            <option value="lose">Похудение (−15%)</option>
+            <option value="maintain" selected>Поддержание</option>
+            <option value="gain">Набор (+12%)</option>
+          </select>
+        </label>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="profileCancelBtn">Отмена</button>
+          <button type="submit" class="btn btn--primary">Сохранить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>

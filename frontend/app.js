@@ -1,16 +1,16 @@
 /**
- * Калькулятор калорий — логика Mini App.
- * Данные хранятся в localStorage браузера Telegram.
+ * Калькулятор калорий — Mini App.
  */
 
-const STORAGE_KEY = "calorie-app-foods";
+import { computeTargets } from "./calc.js";
 
-// Подключение к Telegram WebApp API (если открыто внутри Telegram)
+const STORAGE_FOODS = "calorie-app-foods";
+const STORAGE_PROFILE = "calorie-app-profile";
+
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
-  // Подстраиваем фон под тему Telegram, если доступна
   if (tg.themeParams?.bg_color) {
     document.documentElement.style.setProperty("--tg-bg", tg.themeParams.bg_color);
   }
@@ -28,22 +28,52 @@ const els = {
   modalBackdrop: document.getElementById("modalBackdrop"),
   cancelBtn: document.getElementById("cancelBtn"),
   foodForm: document.getElementById("foodForm"),
+  profileBtn: document.getElementById("profileBtn"),
+  profileModal: document.getElementById("profileModal"),
+  profileBackdrop: document.getElementById("profileBackdrop"),
+  profileCancelBtn: document.getElementById("profileCancelBtn"),
+  profileForm: document.getElementById("profileForm"),
+  hipsField: document.getElementById("hipsField"),
+  targetsSection: document.getElementById("targetsSection"),
+  targetCalories: document.getElementById("targetCalories"),
+  targetProtein: document.getElementById("targetProtein"),
+  targetFat: document.getElementById("targetFat"),
+  targetCarbs: document.getElementById("targetCarbs"),
+  remainingCalories: document.getElementById("remainingCalories"),
+  targetsHint: document.getElementById("targetsHint"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
 let foods = loadFoods();
+let profile = loadProfile();
+let targets = profile ? computeTargets(profile) : null;
 
 function loadFoods() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_FOODS);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(STORAGE_PROFILE);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function saveFoods() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(foods));
+  localStorage.setItem(STORAGE_FOODS, JSON.stringify(foods));
+}
+
+function saveProfile(data) {
+  profile = data;
+  localStorage.setItem(STORAGE_PROFILE, JSON.stringify(profile));
+  targets = computeTargets(profile);
 }
 
 function uid() {
@@ -54,8 +84,8 @@ function round1(n) {
   return Math.round(n * 10) / 10;
 }
 
-function updateTotals() {
-  const totals = foods.reduce(
+function getDayTotals() {
+  return foods.reduce(
     (acc, f) => {
       acc.calories += f.calories;
       acc.protein += f.protein;
@@ -65,11 +95,49 @@ function updateTotals() {
     },
     { calories: 0, protein: 0, fat: 0, carbs: 0 }
   );
+}
+
+function updateTotals() {
+  const totals = getDayTotals();
 
   els.totalCalories.textContent = Math.round(totals.calories);
   els.totalProtein.textContent = round1(totals.protein);
   els.totalFat.textContent = round1(totals.fat);
   els.totalCarbs.textContent = round1(totals.carbs);
+
+  renderTargets(totals);
+}
+
+function renderTargets(totals) {
+  if (!targets) {
+    els.targetsSection.hidden = true;
+    return;
+  }
+
+  els.targetsSection.hidden = false;
+  els.targetCalories.textContent = targets.calories;
+  els.targetProtein.textContent = `${targets.protein} г`;
+  els.targetFat.textContent = `${targets.fat} г`;
+  els.targetCarbs.textContent = `${targets.carbs} г`;
+
+  const left = Math.round(targets.calories - totals.calories);
+  if (left >= 0) {
+    els.remainingCalories.textContent = `осталось ${left} ккал`;
+    els.remainingCalories.classList.remove("over");
+  } else {
+    els.remainingCalories.textContent = `перебор ${Math.abs(left)} ккал`;
+    els.remainingCalories.classList.add("over");
+  }
+
+  const parts = [
+    `BMR ${targets.bmr} · TDEE ${targets.tdee}`,
+    targets.goalLabel,
+    targets.activityLabel,
+  ];
+  if (targets.bodyFat != null) {
+    parts.push(`~${targets.bodyFat}% жира (оценка)`);
+  }
+  els.targetsHint.textContent = parts.join(" · ");
 }
 
 function renderList() {
@@ -95,7 +163,7 @@ function renderList() {
   updateTotals();
 }
 
-function openModal() {
+function openFoodModal() {
   els.modal.hidden = false;
   els.foodForm.reset();
   els.foodForm.elements.protein.value = "0";
@@ -104,13 +172,75 @@ function openModal() {
   els.foodForm.elements.name.focus();
 }
 
-function closeModal() {
+function closeFoodModal() {
   els.modal.hidden = true;
 }
 
-els.addFoodBtn.addEventListener("click", openModal);
-els.cancelBtn.addEventListener("click", closeModal);
-els.modalBackdrop.addEventListener("click", closeModal);
+function openProfileModal() {
+  els.profileModal.hidden = false;
+  fillProfileForm();
+  toggleHipsField();
+}
+
+function closeProfileModal() {
+  els.profileModal.hidden = true;
+}
+
+function fillProfileForm() {
+  const form = els.profileForm;
+  if (!profile) {
+    form.reset();
+    form.elements.activity.value = "moderate";
+    form.elements.goal.value = "maintain";
+    return;
+  }
+
+  form.elements.sex.value = profile.sex || "male";
+  form.elements.age.value = profile.age ?? "";
+  form.elements.weightKg.value = profile.weightKg ?? "";
+  form.elements.heightCm.value = profile.heightCm ?? "";
+  form.elements.neckCm.value = profile.neckCm ?? "";
+  form.elements.chestCm.value = profile.chestCm ?? "";
+  form.elements.waistCm.value = profile.waistCm ?? "";
+  form.elements.hipsCm.value = profile.hipsCm ?? "";
+  form.elements.activity.value = profile.activity || "moderate";
+  form.elements.goal.value = profile.goal || "maintain";
+}
+
+function toggleHipsField() {
+  const isFemale = els.profileForm.elements.sex.value === "female";
+  els.hipsField.hidden = !isFemale;
+}
+
+function profileFromForm() {
+  const data = new FormData(els.profileForm);
+  return {
+    sex: String(data.get("sex")),
+    age: Number(data.get("age")),
+    weightKg: Number(data.get("weightKg")),
+    heightCm: Number(data.get("heightCm")),
+    neckCm: numOrNull(data.get("neckCm")),
+    chestCm: numOrNull(data.get("chestCm")),
+    waistCm: numOrNull(data.get("waistCm")),
+    hipsCm: numOrNull(data.get("hipsCm")),
+    activity: String(data.get("activity")),
+    goal: String(data.get("goal")),
+  };
+}
+
+function numOrNull(v) {
+  const n = Number(v);
+  return v === "" || Number.isNaN(n) ? null : n;
+}
+
+els.addFoodBtn.addEventListener("click", openFoodModal);
+els.cancelBtn.addEventListener("click", closeFoodModal);
+els.modalBackdrop.addEventListener("click", closeFoodModal);
+
+els.profileBtn.addEventListener("click", openProfileModal);
+els.profileCancelBtn.addEventListener("click", closeProfileModal);
+els.profileBackdrop.addEventListener("click", closeProfileModal);
+els.profileForm.elements.sex.addEventListener("change", toggleHipsField);
 
 els.foodForm.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -127,25 +257,34 @@ els.foodForm.addEventListener("submit", (e) => {
 
   saveFoods();
   renderList();
-  closeModal();
+  closeFoodModal();
+  hapticSuccess();
+});
 
-  if (tg?.HapticFeedback) {
-    tg.HapticFeedback.notificationOccurred("success");
-  }
+els.profileForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  saveProfile(profileFromForm());
+  renderList();
+  closeProfileModal();
+  hapticSuccess();
 });
 
 els.foodList.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-id]");
   if (!btn) return;
 
-  const id = btn.getAttribute("data-id");
-  foods = foods.filter((f) => f.id !== id);
+  foods = foods.filter((f) => f.id !== btn.getAttribute("data-id"));
   saveFoods();
   renderList();
-
-  if (tg?.HapticFeedback) {
-    tg.HapticFeedback.impactOccurred("light");
-  }
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred("light");
 });
 
+function hapticSuccess() {
+  if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+}
+
 renderList();
+
+if (!profile) {
+  setTimeout(openProfileModal, 400);
+}

@@ -59,7 +59,87 @@ body {
 }
 
 .header {
-  margin-bottom: 22px;
+  margin-bottom: 18px;
+}
+
+.header__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn--outline {
+  background: var(--surface);
+  color: var(--accent);
+  border: 1.5px solid var(--line);
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.targets {
+  background: linear-gradient(135deg, #e8f5e9 0%, #f7faf5 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  animation: fadeUp 0.45s ease 0.04s both;
+}
+
+.targets__title {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.targets__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.target-pill {
+  text-align: center;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 8px 4px;
+}
+
+.target-pill__label {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.target-pill__value {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-top: 2px;
+}
+
+.target-pill__sub {
+  display: block;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.target-pill__sub.over {
+  color: var(--danger);
+}
+
+.targets__hint {
+  margin: 10px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--muted);
 }
 
 .brand {
@@ -285,10 +365,29 @@ body {
   }
 }
 
+.modal__sheet--scroll {
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
 .modal__sheet h2 {
-  margin: 0 0 18px;
+  margin: 0 0 8px;
   font-size: 1.25rem;
   font-weight: 800;
+}
+
+.modal__lead {
+  margin: 0 0 16px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.field-group-title {
+  margin: 4px 0 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .field {
@@ -301,7 +400,13 @@ body {
   color: var(--muted);
 }
 
-.field input {
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+}
+
+.field input,
+.field select {
   font-family: inherit;
   font-size: 1rem;
   font-weight: 600;
@@ -314,14 +419,14 @@ body {
   transition: border-color 0.15s ease;
 }
 
-.field input:focus {
-  border-color: var(--accent);
-}
-
 .field-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 8px;
+}
+
+.field-row--2 {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .field-row .field {
