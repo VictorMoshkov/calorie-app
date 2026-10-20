@@ -313,8 +313,47 @@ body {
   display: block;
 }
 
-.food-list:not(:empty) + .empty {
+.meal-groups:not(:empty) + .empty {
   display: none;
+}
+
+.meal-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meal-block {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 12px 12px 10px;
+  box-shadow: 0 4px 16px rgba(26, 46, 28, 0.05);
+}
+
+.meal-block__head {
+  margin-bottom: 8px;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.meal-block__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.meal-block__meta {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.field-hint {
+  margin: -4px 0 12px;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--muted);
 }
 
 /* Modal */

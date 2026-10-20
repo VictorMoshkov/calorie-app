@@ -2,8 +2,16 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=7";
-import { searchFoods } from "./food-api.js?v=7";
+import { computeTargets } from "./calc.js?v=8";
+import { searchFoods } from "./food-api.js?v=8";
+import {
+  buildMealGroups,
+  defaultTimeString,
+  eatenAtFromTimeString,
+  formatMealTimeRange,
+  foodEatenAtMs,
+  foodsForToday,
+} from "./meals.js?v=8";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -22,7 +30,7 @@ const els = {
   totalProtein: document.getElementById("totalProtein"),
   totalFat: document.getElementById("totalFat"),
   totalCarbs: document.getElementById("totalCarbs"),
-  foodList: document.getElementById("foodList"),
+  mealGroups: document.getElementById("mealGroups"),
   emptyState: document.getElementById("emptyState"),
   addFoodBtn: document.getElementById("addFoodBtn"),
   modal: document.getElementById("modal"),
@@ -49,6 +57,7 @@ const els = {
   foodSearchResults: document.getElementById("foodSearchResults"),
   servingField: document.getElementById("servingField"),
   servingGrams: document.getElementById("servingGrams"),
+  eatenTime: document.getElementById("eatenTime"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
@@ -95,8 +104,12 @@ function round1(n) {
   return Math.round(n * 10) / 10;
 }
 
+function getTodayFoods() {
+  return foodsForToday(foods);
+}
+
 function getDayTotals() {
-  return foods.reduce(
+  return getTodayFoods().reduce(
     (acc, f) => {
       acc.calories += f.calories;
       acc.protein += f.protein;
@@ -151,26 +164,67 @@ function renderTargets(totals) {
   els.targetsHint.textContent = parts.join(" · ");
 }
 
-function renderList() {
-  els.foodList.innerHTML = "";
+function mealTotals(mealFoods) {
+  return mealFoods.reduce(
+    (acc, f) => {
+      acc.calories += f.calories;
+      acc.protein += f.protein;
+      acc.fat += f.fat;
+      acc.carbs += f.carbs;
+      return acc;
+    },
+    { calories: 0, protein: 0, fat: 0, carbs: 0 }
+  );
+}
 
-  foods.forEach((food) => {
-    const li = document.createElement("li");
-    li.className = "food-item";
-    li.innerHTML = `
-      <div>
-        <p class="food-item__name"></p>
-        <p class="food-item__meta"></p>
-      </div>
-      <button type="button" class="btn btn--danger" data-id="${food.id}">Удалить</button>
+function renderList() {
+  const today = getTodayFoods();
+  els.mealGroups.innerHTML = "";
+
+  const groups = buildMealGroups(today);
+
+  groups.forEach((meal) => {
+    const section = document.createElement("section");
+    section.className = "meal-block";
+
+    const totals = mealTotals(meal.foods);
+    const head = document.createElement("div");
+    head.className = "meal-block__head";
+    head.innerHTML = `
+      <h3 class="meal-block__title"></h3>
+      <p class="meal-block__meta"></p>
     `;
-    li.querySelector(".food-item__name").textContent = food.name;
-    li.querySelector(".food-item__meta").textContent =
-      `${Math.round(food.calories)} ккал · Б ${round1(food.protein)} · Ж ${round1(food.fat)} · У ${round1(food.carbs)}`;
-    els.foodList.appendChild(li);
+    head.querySelector(".meal-block__title").textContent =
+      `Приём ${meal.mealNumber}`;
+    head.querySelector(".meal-block__meta").textContent =
+      `${formatMealTimeRange(meal.start, meal.end)} · ${Math.round(totals.calories)} ккал`;
+    section.appendChild(head);
+
+    const ul = document.createElement("ul");
+    ul.className = "food-list";
+
+    meal.foods.forEach((food) => {
+      const li = document.createElement("li");
+      li.className = "food-item";
+      li.innerHTML = `
+        <div>
+          <p class="food-item__name"></p>
+          <p class="food-item__meta"></p>
+        </div>
+        <button type="button" class="btn btn--danger" data-id="">Удалить</button>
+      `;
+      li.querySelector(".food-item__name").textContent = food.name;
+      li.querySelector(".food-item__meta").textContent =
+        `${formatMealTimeRange(foodEatenAtMs(food), foodEatenAtMs(food))} · ${Math.round(food.calories)} ккал · Б ${round1(food.protein)} · Ж ${round1(food.fat)} · У ${round1(food.carbs)}`;
+      li.querySelector("[data-id]").setAttribute("data-id", food.id);
+      ul.appendChild(li);
+    });
+
+    section.appendChild(ul);
+    els.mealGroups.appendChild(section);
   });
 
-  els.emptyState.hidden = foods.length > 0;
+  els.emptyState.hidden = today.length > 0;
   updateTotals();
 }
 
@@ -183,6 +237,7 @@ function openFoodModal() {
   productPer100 = null;
   els.servingField.hidden = true;
   clearSearchUi();
+  els.eatenTime.value = defaultTimeString();
   els.foodSearch.focus();
 }
 
@@ -360,6 +415,7 @@ els.foodForm.addEventListener("submit", (e) => {
     protein: Number(data.get("protein")) || 0,
     fat: Number(data.get("fat")) || 0,
     carbs: Number(data.get("carbs")) || 0,
+    eatenAt: eatenAtFromTimeString(String(data.get("eatenTime"))),
   });
 
   saveFoods();
@@ -376,7 +432,7 @@ els.profileForm.addEventListener("submit", (e) => {
   hapticSuccess();
 });
 
-els.foodList.addEventListener("click", (e) => {
+els.mealGroups.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-id]");
   if (!btn) return;
 
