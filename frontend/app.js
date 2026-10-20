@@ -2,8 +2,8 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=10";
-import { searchFoods } from "./food-api.js?v=10";
+import { computeTargets } from "./calc.js?v=11";
+import { searchFoods } from "./food-api.js?v=11";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -11,9 +11,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=10";
+} from "./meals.js?v=11";
 
-const APP_VERSION = "10";
+const APP_VERSION = "11";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -305,7 +305,11 @@ async function runFoodSearch(query) {
       return;
     }
 
-    setSearchStatus(`Найдено: ${items.length}. Нажмите на продукт.`);
+    const localCount = items.filter((i) => i.source === "local").length;
+    const extra = localCount
+      ? ` (из них ${localCount} из локальной базы)`
+      : "";
+    setSearchStatus(`Найдено: ${items.length}${extra}. Нажмите на продукт.`);
     els.foodSearchResults.innerHTML = "";
     items.forEach((item) => {
       const li = document.createElement("li");

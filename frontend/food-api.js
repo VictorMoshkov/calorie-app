@@ -1,9 +1,13 @@
 /**
- * Поиск продуктов через Open Food Facts (бесплатная база).
- * https://world.openfoodfacts.org
+ * Поиск: локальная база + Open Food Facts.
  */
 
-const SEARCH_URL = "https://world.openfoodfacts.org/cgi/search.pl";
+import { searchLocalFoods } from "./foods-local.js";
+
+const OFF_URLS = [
+  "https://ru.openfoodfacts.org/cgi/search.pl",
+  "https://world.openfoodfacts.org/cgi/search.pl",
+];
 
 function num(value) {
   const n = Number(value);
@@ -19,10 +23,16 @@ function pickKcal(nutriments) {
   );
 }
 
+function round1(v) {
+  return Math.round(v * 10) / 10;
+}
+
 /** @param {Record<string, unknown>} raw */
 export function normalizeProduct(raw) {
   const n = raw.nutriments || {};
-  const name = String(raw.product_name || raw.generic_name || "Без названия").trim();
+  const name = String(raw.product_name || raw.generic_name || "").trim();
+  if (!name) return null;
+
   const brand = raw.brands ? String(raw.brands).split(",")[0].trim() : "";
 
   const kcal100 = Math.round(pickKcal(n));
@@ -39,51 +49,82 @@ export function normalizeProduct(raw) {
     if (fromKcal > 0) carbs100 = round1(fromKcal);
   }
 
+  if (kcal100 <= 0 && protein100 <= 0 && carbs100 <= 0) return null;
+
   return {
-    id: String(raw.code || raw._id || name),
+    id: String(raw.code || name),
     name: brand ? `${name} (${brand})` : name,
     kcal100,
     protein100,
     fat100,
     carbs100,
+    source: "off",
   };
 }
 
-function round1(v) {
-  return Math.round(v * 10) / 10;
+async function searchOpenFoodFacts(query) {
+  const params = new URLSearchParams({
+    search_terms: query,
+    search_simple: "1",
+    action: "process",
+    json: "1",
+    page_size: "15",
+    lc: "ru",
+    fields: "code,product_name,generic_name,brands,nutriments",
+  });
+
+  /** @type {ReturnType<typeof normalizeProduct>[]} */
+  const found = [];
+
+  for (const base of OFF_URLS) {
+    try {
+      const res = await fetch(`${base}?${params}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) continue;
+
+      const data = await res.json();
+      const list = Array.isArray(data.products) ? data.products : [];
+
+      for (const raw of list) {
+        const item = normalizeProduct(raw);
+        if (item) found.push(item);
+      }
+
+      if (found.length >= 10) break;
+    } catch {
+      // пробуем следующий источник
+    }
+  }
+
+  return found;
+}
+
+function dedupeByName(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = item.name.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**
  * @param {string} query
- * @returns {Promise<ReturnType<typeof normalizeProduct>[]>}
  */
 export async function searchFoods(query) {
   const q = query.trim();
   if (q.length < 2) return [];
 
-  const params = new URLSearchParams({
-    search_terms: q,
-    search_simple: "1",
-    action: "process",
-    json: "1",
-    page_size: "20",
-    lc: "ru",
-    countries: "Russia",
-    fields: "code,product_name,generic_name,brands,nutriments",
-  });
+  const local = searchLocalFoods(q);
+  let off = [];
 
-  const res = await fetch(`${SEARCH_URL}?${params}`, {
-    headers: { Accept: "application/json" },
-  });
-
-  if (!res.ok) {
-    throw new Error(`Ошибка базы: ${res.status}`);
+  try {
+    off = await searchOpenFoodFacts(q);
+  } catch {
+    off = [];
   }
 
-  const data = await res.json();
-  const list = Array.isArray(data.products) ? data.products : [];
-
-  return list
-    .map(normalizeProduct)
-    .filter((p) => p.kcal100 > 0 || p.protein100 > 0 || p.carbs100 > 0);
+  return dedupeByName([...local, ...off]).slice(0, 25);
 }
