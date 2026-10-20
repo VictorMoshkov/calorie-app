@@ -356,6 +356,14 @@ body {
   color: var(--muted);
 }
 
+.app-version {
+  margin: 24px 0 0;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--muted);
+  opacity: 0.85;
+}
+
 /* Modal */
 .modal[hidden] {
   display: none;

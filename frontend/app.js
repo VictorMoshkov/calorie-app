@@ -2,8 +2,10 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=8";
-import { searchFoods } from "./food-api.js?v=8";
+const APP_VERSION = "9";
+
+import { computeTargets } from "./calc.js?v=9";
+import { searchFoods } from "./food-api.js?v=9";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -11,7 +13,7 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=8";
+} from "./meals.js?v=9";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -58,6 +60,7 @@ const els = {
   servingField: document.getElementById("servingField"),
   servingGrams: document.getElementById("servingGrams"),
   eatenTime: document.getElementById("eatenTime"),
+  appVersion: document.getElementById("appVersion"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
@@ -444,6 +447,10 @@ els.mealGroups.addEventListener("click", (e) => {
 
 function hapticSuccess() {
   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
+}
+
+if (els.appVersion) {
+  els.appVersion.textContent = `Версия ${APP_VERSION}`;
 }
 
 renderList();
