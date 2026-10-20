@@ -2,8 +2,8 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=9";
-import { searchFoods } from "./food-api.js?v=9";
+import { computeTargets } from "./calc.js?v=10";
+import { searchFoods } from "./food-api.js?v=10";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -11,9 +11,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=9";
+} from "./meals.js?v=10";
 
-const APP_VERSION = "9";
+const APP_VERSION = "10";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -24,6 +24,11 @@ if (tg) {
   tg.expand();
   if (tg.themeParams?.bg_color) {
     document.documentElement.style.setProperty("--tg-bg", tg.themeParams.bg_color);
+  }
+  const insetTop =
+    tg.contentSafeAreaInset?.top ?? tg.safeAreaInset?.top ?? 0;
+  if (insetTop > 0) {
+    document.documentElement.style.setProperty("--tg-safe-top", `${insetTop}px`);
   }
 }
 
