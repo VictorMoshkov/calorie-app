@@ -78,7 +78,7 @@ fly launch --no-deploy
 Задайте секреты (подставьте свои значения):
 
 ```powershell
-fly secrets set BOT_TOKEN="ваш_токен_от_BotFather" WEBAPP_URL="https://ВАШ_ЛОГИН.github.io/calorie-app/"
+fly secrets set BOT_TOKEN="ваш_токен_от_BotFather" WEBAPP_URL="https://ВАШ_ЛОГИН.github.io/calorie-app/?v=12&api=https://calorie-bot.fly.dev" GROQ_API_KEY="ключ_с_console.groq.com"
 fly deploy
 ```
 

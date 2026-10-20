@@ -70,6 +70,12 @@ body {
   gap: 12px;
 }
 
+.header__actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .btn--outline {
   background: var(--surface);
   color: var(--accent);
@@ -604,4 +610,71 @@ body {
 
 .search-results__item:active {
   background: var(--bg-accent);
+}
+
+.ai-disclaimer {
+  margin-top: -4px;
+  font-size: 0.78rem;
+}
+
+.ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(42vh, 320px);
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding: 4px 2px;
+}
+
+.ai-bubble {
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-bubble--user {
+  align-self: flex-end;
+  max-width: 92%;
+  background: var(--accent);
+  color: #fff;
+}
+
+.ai-bubble--assistant {
+  align-self: flex-start;
+  max-width: 100%;
+  background: var(--bg-accent);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.ai-bubble--error {
+  background: #fff4ed;
+  border: 1px solid #f5c4a8;
+  color: var(--danger);
+}
+
+.ai-form__field textarea {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  outline: none;
+  resize: vertical;
+  min-height: 56px;
+}
+
+.ai-form__field textarea:focus {
+  border-color: var(--accent);
+}
+
+.modal__sheet--chat {
+  max-height: min(92vh, 720px);
 }

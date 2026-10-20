@@ -2,8 +2,9 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=11";
-import { searchFoods } from "./food-api.js?v=11";
+import { sendNutritionQuestion, resolveAiApiBase, saveAiApiBase } from "./ai-chat.js?v=12";
+import { computeTargets } from "./calc.js?v=12";
+import { searchFoods } from "./food-api.js?v=12";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -11,9 +12,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=11";
+} from "./meals.js?v=12";
 
-const APP_VERSION = "11";
+const APP_VERSION = "12";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -66,6 +67,16 @@ const els = {
   servingGrams: document.getElementById("servingGrams"),
   eatenTime: document.getElementById("eatenTime"),
   appVersion: document.getElementById("appVersion"),
+  aiChatBtn: document.getElementById("aiChatBtn"),
+  aiModal: document.getElementById("aiModal"),
+  aiBackdrop: document.getElementById("aiBackdrop"),
+  aiCloseBtn: document.getElementById("aiCloseBtn"),
+  aiForm: document.getElementById("aiForm"),
+  aiInput: document.getElementById("aiInput"),
+  aiMessages: document.getElementById("aiMessages"),
+  aiStatus: document.getElementById("aiStatus"),
+  aiSendBtn: document.getElementById("aiSendBtn"),
+  aiApiUrl: document.getElementById("aiApiUrl"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
@@ -75,6 +86,8 @@ let targets = profile ? computeTargets(profile) : null;
 /** @type {{ name: string, kcal100: number, protein100: number, fat100: number, carbs100: number } | null} */
 let productPer100 = null;
 let searchTimer = null;
+/** @type {{ role: 'user' | 'assistant', content: string }[]} */
+let aiHistory = [];
 
 function loadFoods() {
   try {
@@ -346,6 +359,7 @@ function fillProfileForm() {
     form.elements.activity.value = "moderate";
     form.elements.goal.value = "maintain";
     form.elements.useMeasurements.checked = false;
+    if (els.aiApiUrl) els.aiApiUrl.value = resolveAiApiBase();
     toggleMeasurementsBlock();
     return;
   }
@@ -361,6 +375,7 @@ function fillProfileForm() {
   form.elements.activity.value = profile.activity || "moderate";
   form.elements.goal.value = profile.goal || "maintain";
   form.elements.useMeasurements.checked = Boolean(profile.useMeasurements);
+  if (els.aiApiUrl) els.aiApiUrl.value = resolveAiApiBase();
   toggleMeasurementsBlock();
 }
 
@@ -439,6 +454,7 @@ els.foodForm.addEventListener("submit", (e) => {
 els.profileForm.addEventListener("submit", (e) => {
   e.preventDefault();
   saveProfile(profileFromForm());
+  if (els.aiApiUrl) saveAiApiBase(els.aiApiUrl.value);
   renderList();
   closeProfileModal();
   hapticSuccess();
@@ -457,6 +473,117 @@ els.mealGroups.addEventListener("click", (e) => {
 function hapticSuccess() {
   if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
 }
+
+function buildAiContext() {
+  const totals = getDayTotals();
+  const ctx = {
+    eatenToday: {
+      calories: Math.round(totals.calories),
+      proteinG: round1(totals.protein),
+      fatG: round1(totals.fat),
+      carbsG: round1(totals.carbs),
+      items: getTodayFoods().map((f) => f.name),
+    },
+  };
+  if (targets) {
+    ctx.dailyTargets = {
+      calories: targets.calories,
+      proteinG: targets.protein,
+      fatG: targets.fat,
+      carbsG: targets.carbs,
+      goal: targets.goalLabel,
+      activity: targets.activityLabel,
+    };
+  }
+  if (profile) {
+    ctx.profile = {
+      sex: profile.sex === "female" ? "женский" : "мужской",
+      age: profile.age,
+      weightKg: profile.weightKg,
+      heightCm: profile.heightCm,
+    };
+  }
+  return ctx;
+}
+
+function appendAiBubble(role, text, extraClass = "") {
+  const div = document.createElement("div");
+  div.className = `ai-bubble ai-bubble--${role}${extraClass ? ` ${extraClass}` : ""}`;
+  div.textContent = text;
+  els.aiMessages.appendChild(div);
+  els.aiMessages.scrollTop = els.aiMessages.scrollHeight;
+}
+
+function setAiStatus(text, visible = true) {
+  if (!els.aiStatus) return;
+  els.aiStatus.textContent = text;
+  els.aiStatus.hidden = !visible || !text;
+}
+
+function openAiModal() {
+  els.aiModal.hidden = false;
+  document.body.classList.add("modal-open");
+  if (!resolveAiApiBase()) {
+    setAiStatus(
+      "Укажите в ссылке Mini App параметр api= (HTTPS-адрес бота, например Fly.io).",
+      true
+    );
+  } else if (!tg?.initData) {
+    setAiStatus("Откройте приложение из Telegram — нужна подпись initData.", true);
+  } else {
+    setAiStatus("", false);
+  }
+  if (els.aiMessages.childElementCount === 0) {
+    appendAiBubble(
+      "assistant",
+      "Привет! Спросите про рацион, БЖУ или идеи блюд — учту ваш дневник и норму, если они заполнены."
+    );
+  }
+  els.aiInput.focus();
+}
+
+function closeAiModal() {
+  els.aiModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+async function submitAiQuestion(e) {
+  e.preventDefault();
+  const message = els.aiInput.value.trim();
+  if (!message) return;
+
+  appendAiBubble("user", message);
+  aiHistory.push({ role: "user", content: message });
+  els.aiInput.value = "";
+  els.aiSendBtn.disabled = true;
+  setAiStatus("Думаю…", true);
+
+  try {
+    const reply = await sendNutritionQuestion({
+      message,
+      initData: tg?.initData || "",
+      context: buildAiContext(),
+      history: aiHistory.slice(0, -1),
+    });
+    appendAiBubble("assistant", reply);
+    aiHistory.push({ role: "assistant", content: reply });
+    setAiStatus("", false);
+    hapticSuccess();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Не удалось получить ответ";
+    appendAiBubble("assistant", msg, "ai-bubble--error");
+    setAiStatus(msg, true);
+  } finally {
+    els.aiSendBtn.disabled = false;
+  }
+}
+
+els.aiChatBtn.addEventListener("click", openAiModal);
+els.aiCloseBtn.addEventListener("click", closeAiModal);
+els.aiBackdrop.addEventListener("click", closeAiModal);
+els.aiForm.addEventListener("submit", submitAiQuestion);
+
+resolveAiApiBase();
 
 if (els.appVersion) {
   els.appVersion.textContent = `Версия ${APP_VERSION}`;

@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Калькулятор калорий</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
   <div class="app">
@@ -18,7 +18,10 @@
           <p class="brand">CalorieApp</p>
           <h1>Сегодня</h1>
         </div>
-        <button type="button" class="btn btn--outline" id="profileBtn">Профиль</button>
+        <div class="header__actions">
+          <button type="button" class="btn btn--outline" id="aiChatBtn">ИИ</button>
+          <button type="button" class="btn btn--outline" id="profileBtn">Профиль</button>
+        </div>
       </div>
     </header>
 
@@ -206,6 +209,11 @@
             <option value="gain">Набор (+12%)</option>
           </select>
         </label>
+        <label class="field">
+          <span>Сервер ИИ (HTTPS, необязательно)</span>
+          <input type="url" name="aiApiUrl" id="aiApiUrl" placeholder="https://ваш-бот.fly.dev" inputmode="url" autocomplete="off" />
+        </label>
+        <p class="field-hint">Если пусто — берётся из ссылки Mini App (?api=…) или Fly после деплоя.</p>
         <div class="modal__actions">
           <button type="button" class="btn btn--ghost" id="profileCancelBtn">Отмена</button>
           <button type="submit" class="btn btn--primary">Сохранить</button>
@@ -214,6 +222,29 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=11"></script>
+  <!-- Чат по питанию -->
+  <div class="modal" id="aiModal" hidden>
+    <div class="modal__backdrop" id="aiBackdrop"></div>
+    <div class="modal__sheet modal__sheet--scroll modal__sheet--chat" role="dialog" aria-labelledby="aiTitle">
+      <div class="modal__sheet-head">
+        <h2 id="aiTitle">ИИ по питанию</h2>
+      </div>
+      <p class="modal__lead ai-disclaimer">Общие советы, не замена врачу. Ответы могут ошибаться.</p>
+      <div class="ai-messages" id="aiMessages" aria-live="polite"></div>
+      <form id="aiForm" class="ai-form">
+        <label class="field ai-form__field">
+          <span>Ваш вопрос</span>
+          <textarea id="aiInput" rows="2" placeholder="Например: чем заменить сладкое на ужин?" maxlength="2000" required></textarea>
+        </label>
+        <p class="search-status" id="aiStatus" hidden></p>
+        <div class="modal__actions">
+          <button type="button" class="btn btn--ghost" id="aiCloseBtn">Закрыть</button>
+          <button type="submit" class="btn btn--primary" id="aiSendBtn">Спросить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="app.js?v=12"></script>
 </body>
 </html>
