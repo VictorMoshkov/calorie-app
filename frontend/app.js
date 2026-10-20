@@ -2,7 +2,7 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js";
+import { computeTargets } from "./calc.js?v=5";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
