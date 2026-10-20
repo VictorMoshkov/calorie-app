@@ -2,8 +2,6 @@
  * Калькулятор калорий — Mini App.
  */
 
-const APP_VERSION = "9";
-
 import { computeTargets } from "./calc.js?v=9";
 import { searchFoods } from "./food-api.js?v=9";
 import {
@@ -14,6 +12,8 @@ import {
   foodEatenAtMs,
   foodsForToday,
 } from "./meals.js?v=9";
+
+const APP_VERSION = "9";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
