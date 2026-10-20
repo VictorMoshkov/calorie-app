@@ -34,6 +34,8 @@ const els = {
   profileCancelBtn: document.getElementById("profileCancelBtn"),
   profileForm: document.getElementById("profileForm"),
   hipsField: document.getElementById("hipsField"),
+  useMeasurements: document.getElementById("useMeasurements"),
+  measurementsBlock: document.getElementById("measurementsBlock"),
   targetsSection: document.getElementById("targetsSection"),
   targetCalories: document.getElementById("targetCalories"),
   targetProtein: document.getElementById("targetProtein"),
@@ -192,6 +194,8 @@ function fillProfileForm() {
     form.reset();
     form.elements.activity.value = "moderate";
     form.elements.goal.value = "maintain";
+    form.elements.useMeasurements.checked = false;
+    toggleMeasurementsBlock();
     return;
   }
 
@@ -205,11 +209,20 @@ function fillProfileForm() {
   form.elements.hipsCm.value = profile.hipsCm ?? "";
   form.elements.activity.value = profile.activity || "moderate";
   form.elements.goal.value = profile.goal || "maintain";
+  form.elements.useMeasurements.checked = Boolean(profile.useMeasurements);
+  toggleMeasurementsBlock();
+}
+
+function toggleMeasurementsBlock() {
+  const on = els.useMeasurements.checked;
+  els.measurementsBlock.hidden = !on;
+  toggleHipsField();
 }
 
 function toggleHipsField() {
   const isFemale = els.profileForm.elements.sex.value === "female";
-  els.hipsField.hidden = !isFemale;
+  const showHips = isFemale && els.useMeasurements.checked;
+  els.hipsField.hidden = !showHips;
 }
 
 function profileFromForm() {
@@ -225,6 +238,7 @@ function profileFromForm() {
     hipsCm: numOrNull(data.get("hipsCm")),
     activity: String(data.get("activity")),
     goal: String(data.get("goal")),
+    useMeasurements: data.get("useMeasurements") === "on",
   };
 }
 
@@ -241,6 +255,7 @@ els.profileBtn.addEventListener("click", openProfileModal);
 els.profileCancelBtn.addEventListener("click", closeProfileModal);
 els.profileBackdrop.addEventListener("click", closeProfileModal);
 els.profileForm.elements.sex.addEventListener("change", toggleHipsField);
+els.useMeasurements.addEventListener("change", toggleMeasurementsBlock);
 
 els.foodForm.addEventListener("submit", (e) => {
   e.preventDefault();

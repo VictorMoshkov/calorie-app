@@ -138,7 +138,12 @@
           <span>Рост (см)</span>
           <input type="number" name="heightCm" min="120" max="230" required placeholder="175" />
         </label>
-        <p class="field-group-title">Обхваты (см) — для оценки % жира</p>
+        <label class="field field--check">
+          <input type="checkbox" name="useMeasurements" id="useMeasurements" />
+          <span>Учитывать обхваты (точнее оценка % жира, не обязательно)</span>
+        </label>
+        <div class="measurements-block" id="measurementsBlock" hidden>
+        <p class="field-group-title">Обхваты (см)</p>
         <div class="field-row field-row--3">
           <label class="field">
             <span>Шея</span>
@@ -157,6 +162,7 @@
           <span>Бёдра (см) — для женщин в формуле % жира</span>
           <input type="number" name="hipsCm" min="60" max="200" step="0.1" placeholder="95" />
         </label>
+        </div>
         <label class="field">
           <span>Активность</span>
           <select name="activity" required>

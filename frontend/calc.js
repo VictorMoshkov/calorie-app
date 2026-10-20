@@ -24,6 +24,8 @@ function cmToIn(cm) {
 
 /** Оценка % жира по методу ВМС США (опционально для отображения). */
 export function estimateBodyFat(profile) {
+  if (!profile.useMeasurements) return null;
+
   const { sex, heightCm, neckCm, waistCm, hipsCm } = profile;
   if (!heightCm || !neckCm || !waistCm) return null;
 
