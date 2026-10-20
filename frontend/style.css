@@ -417,6 +417,18 @@ body {
   display: none;
 }
 
+.measurements-toggle {
+  background: var(--bg-accent);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+
+.measurements-toggle .field--check {
+  margin-bottom: 0;
+}
+
 .field {
   display: flex;
   flex-direction: column;

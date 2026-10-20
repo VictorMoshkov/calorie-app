@@ -117,6 +117,12 @@
       <h2 id="profileTitle">Профиль</h2>
       <p class="modal__lead">Заполните данные — рассчитаем калории и БЖУ на день.</p>
       <form id="profileForm">
+        <div class="measurements-toggle">
+          <label class="field field--check">
+            <input type="checkbox" name="useMeasurements" id="useMeasurements" />
+            <span><strong>Указать обхваты</strong> — шея, грудь, талия, бёдра (для оценки % жира, можно не включать)</span>
+          </label>
+        </div>
         <label class="field">
           <span>Пол</span>
           <select name="sex" required>
@@ -137,10 +143,6 @@
         <label class="field">
           <span>Рост (см)</span>
           <input type="number" name="heightCm" min="120" max="230" required placeholder="175" />
-        </label>
-        <label class="field field--check">
-          <input type="checkbox" name="useMeasurements" id="useMeasurements" />
-          <span>Учитывать обхваты (точнее оценка % жира, не обязательно)</span>
         </label>
         <div class="measurements-block" id="measurementsBlock" hidden>
         <p class="field-group-title">Обхваты (см)</p>
@@ -189,6 +191,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=2"></script>
 </body>
 </html>
