@@ -2,7 +2,8 @@
  * Калькулятор калорий — Mini App.
  */
 
-import { computeTargets } from "./calc.js?v=5";
+import { computeTargets } from "./calc.js?v=6";
+import { searchFoods } from "./food-api.js?v=6";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -43,12 +44,20 @@ const els = {
   targetCarbs: document.getElementById("targetCarbs"),
   remainingCalories: document.getElementById("remainingCalories"),
   targetsHint: document.getElementById("targetsHint"),
+  foodSearch: document.getElementById("foodSearch"),
+  searchStatus: document.getElementById("searchStatus"),
+  foodSearchResults: document.getElementById("foodSearchResults"),
+  servingField: document.getElementById("servingField"),
+  servingGrams: document.getElementById("servingGrams"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
 let foods = loadFoods();
 let profile = loadProfile();
 let targets = profile ? computeTargets(profile) : null;
+/** @type {{ name: string, kcal100: number, protein100: number, fat100: number, carbs100: number } | null} */
+let productPer100 = null;
+let searchTimer = null;
 
 function loadFoods() {
   try {
@@ -171,11 +180,85 @@ function openFoodModal() {
   els.foodForm.elements.protein.value = "0";
   els.foodForm.elements.fat.value = "0";
   els.foodForm.elements.carbs.value = "0";
-  els.foodForm.elements.name.focus();
+  productPer100 = null;
+  els.servingField.hidden = true;
+  clearSearchUi();
+  els.foodSearch.focus();
 }
 
 function closeFoodModal() {
   els.modal.hidden = true;
+  clearSearchUi();
+  productPer100 = null;
+}
+
+function clearSearchUi() {
+  els.foodSearch.value = "";
+  els.searchStatus.hidden = true;
+  els.foodSearchResults.hidden = true;
+  els.foodSearchResults.innerHTML = "";
+}
+
+function setSearchStatus(text, show = true) {
+  els.searchStatus.textContent = text;
+  els.searchStatus.hidden = !show;
+}
+
+function applyPortionFromBase() {
+  if (!productPer100) return;
+  const grams = Number(els.servingGrams.value) || 100;
+  const k = grams / 100;
+  const form = els.foodForm;
+  form.elements.name.value = productPer100.name;
+  form.elements.calories.value = Math.round(productPer100.kcal100 * k);
+  form.elements.protein.value = round1(productPer100.protein100 * k);
+  form.elements.fat.value = round1(productPer100.fat100 * k);
+  form.elements.carbs.value = round1(productPer100.carbs100 * k);
+}
+
+function selectProductFromDb(product) {
+  productPer100 = product;
+  els.servingField.hidden = false;
+  els.servingGrams.value = "100";
+  applyPortionFromBase();
+  els.foodSearchResults.hidden = true;
+  setSearchStatus(`Выбрано: ${product.name} (данные на 100 г)`, true);
+  hapticSuccess();
+}
+
+async function runFoodSearch(query) {
+  if (query.trim().length < 2) {
+    els.foodSearchResults.hidden = true;
+    els.searchStatus.hidden = true;
+    return;
+  }
+
+  setSearchStatus("Ищем в базе…");
+  try {
+    const items = await searchFoods(query);
+    if (!items.length) {
+      setSearchStatus("Ничего не найдено. Введите вручную ниже.");
+      els.foodSearchResults.hidden = true;
+      return;
+    }
+
+    setSearchStatus(`Найдено: ${items.length}. Нажмите на продукт.`);
+    els.foodSearchResults.innerHTML = "";
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "search-results__item";
+      btn.textContent = `${item.name} — ${item.kcal100} ккал / 100 г`;
+      btn.addEventListener("click", () => selectProductFromDb(item));
+      li.appendChild(btn);
+      els.foodSearchResults.appendChild(li);
+    });
+    els.foodSearchResults.hidden = false;
+  } catch {
+    setSearchStatus("Не удалось загрузить базу. Проверьте интернет или введите вручную.");
+    els.foodSearchResults.hidden = true;
+  }
 }
 
 function openProfileModal() {
@@ -250,6 +333,14 @@ function numOrNull(v) {
 els.addFoodBtn.addEventListener("click", openFoodModal);
 els.cancelBtn.addEventListener("click", closeFoodModal);
 els.modalBackdrop.addEventListener("click", closeFoodModal);
+
+els.foodSearch.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  const q = els.foodSearch.value;
+  searchTimer = setTimeout(() => runFoodSearch(q), 450);
+});
+
+els.servingGrams.addEventListener("input", applyPortionFromBase);
 
 els.profileBtn.addEventListener("click", openProfileModal);
 els.profileCancelBtn.addEventListener("click", closeProfileModal);

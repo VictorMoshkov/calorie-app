@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Калькулятор калорий</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
   <div class="app">
@@ -84,8 +84,18 @@
       <h2 id="modalTitle">Новый продукт</h2>
       <form id="foodForm">
         <label class="field">
+          <span>Поиск в базе Open Food Facts</span>
+          <input type="search" id="foodSearch" placeholder="Например: творог, гречка" autocomplete="off" />
+        </label>
+        <p class="search-status" id="searchStatus" hidden></p>
+        <ul class="search-results" id="foodSearchResults" hidden></ul>
+        <label class="field">
           <span>Название</span>
           <input type="text" name="name" placeholder="Например, овсянка" required autocomplete="off" />
+        </label>
+        <label class="field" id="servingField" hidden>
+          <span>Порция (г) — пересчёт с 100 г</span>
+          <input type="number" name="servingGrams" id="servingGrams" min="1" step="1" value="100" />
         </label>
         <label class="field">
           <span>Калории (ккал)</span>
@@ -194,6 +204,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=5"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>

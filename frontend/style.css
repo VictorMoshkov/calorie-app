@@ -478,3 +478,51 @@ body {
   gap: 8px;
   margin-top: 6px;
 }
+
+.search-status {
+  margin: -6px 0 10px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.search-status[hidden] {
+  display: none;
+}
+
+.search-results {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.search-results[hidden] {
+  display: none;
+}
+
+.search-results__item {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.search-results__item:last-child {
+  border-bottom: none;
+}
+
+.search-results__item:active {
+  background: var(--bg-accent);
+}
