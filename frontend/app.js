@@ -8,10 +8,14 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=16";
-import { computeTargets } from "./calc.js?v=16";
-import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=16";
-import { startBarcodeScanner, stopBarcodeScanner } from "./barcode-scanner.js?v=16";
+} from "./ai-chat.js?v=17";
+import { computeTargets } from "./calc.js?v=17";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=17";
+import {
+  scanBarcodeFromImage,
+  startBarcodeScanner,
+  stopBarcodeScanner,
+} from "./barcode-scanner.js?v=17";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -19,9 +23,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=16";
+} from "./meals.js?v=17";
 
-const APP_VERSION = "16";
+const APP_VERSION = "17";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -91,6 +95,8 @@ const els = {
   barcodeModalBackdrop: document.getElementById("barcodeModalBackdrop"),
   barcodeCloseBtn: document.getElementById("barcodeCloseBtn"),
   barcodeScanStatus: document.getElementById("barcodeScanStatus"),
+  barcodePhotoBtn: document.getElementById("barcodePhotoBtn"),
+  barcodePhotoInput: document.getElementById("barcodePhotoInput"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
@@ -349,24 +355,43 @@ async function lookupBarcode(code) {
 async function openBarcodeScannerModal() {
   if (!els.barcodeModal) return;
   els.barcodeModal.hidden = false;
-  setBarcodeScanStatus("Запуск камеры…", true);
+  document.body.classList.add("modal-open");
+  setBarcodeScanStatus("Открываем камеру…", true);
+  await new Promise((r) => setTimeout(r, 350));
   await startBarcodeScanner(
     "barcodeReader",
     async (code) => {
-      setBarcodeScanStatus("", false);
-      els.barcodeModal.hidden = true;
+      await closeBarcodeScannerModal();
       await lookupBarcode(code);
     },
     (err) => {
       setBarcodeScanStatus(err.message || "Не удалось открыть камеру", true);
-    }
+    },
+    (msg) => setBarcodeScanStatus(msg, true)
   );
 }
 
 async function closeBarcodeScannerModal() {
   await stopBarcodeScanner();
   if (els.barcodeModal) els.barcodeModal.hidden = true;
+  document.body.classList.remove("modal-open");
   setBarcodeScanStatus("", false);
+}
+
+async function onBarcodePhotoPicked() {
+  const file = els.barcodePhotoInput?.files?.[0];
+  if (!file) return;
+  setBarcodeScanStatus("Читаем штрихкод с фото…", true);
+  try {
+    const code = await scanBarcodeFromImage(file);
+    await closeBarcodeScannerModal();
+    await lookupBarcode(code);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Не удалось распознать фото";
+    setBarcodeScanStatus(msg, true);
+  } finally {
+    if (els.barcodePhotoInput) els.barcodePhotoInput.value = "";
+  }
 }
 
 async function runFoodSearch(query) {
@@ -501,6 +526,8 @@ els.barcodeLookupBtn?.addEventListener("click", () =>
 );
 els.barcodeCloseBtn?.addEventListener("click", () => closeBarcodeScannerModal());
 els.barcodeModalBackdrop?.addEventListener("click", () => closeBarcodeScannerModal());
+els.barcodePhotoBtn?.addEventListener("click", () => els.barcodePhotoInput?.click());
+els.barcodePhotoInput?.addEventListener("change", () => onBarcodePhotoPicked());
 
 els.servingGrams.addEventListener("input", applyPortionFromBase);
 
