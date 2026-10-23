@@ -8,14 +8,14 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=17";
-import { computeTargets } from "./calc.js?v=17";
-import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=17";
+} from "./ai-chat.js?v=18";
+import { computeTargets } from "./calc.js?v=18";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=18";
 import {
   scanBarcodeFromImage,
   startBarcodeScanner,
   stopBarcodeScanner,
-} from "./barcode-scanner.js?v=17";
+} from "./barcode-scanner.js?v=18";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -23,9 +23,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=17";
+} from "./meals.js?v=18";
 
-const APP_VERSION = "17";
+const APP_VERSION = "18";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -692,9 +692,21 @@ els.aiForm.addEventListener("submit", submitAiQuestion);
 
 loadAiApiConfig();
 
-if (els.appVersion) {
+async function showAppVersion() {
+  if (!els.appVersion) return;
   els.appVersion.textContent = `Версия ${APP_VERSION}`;
+  try {
+    const url = new URL("version.json", window.location.href);
+    url.searchParams.set("t", String(Date.now()));
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.version) els.appVersion.textContent = `Версия ${data.version}`;
+  } catch {
+    /* fallback APP_VERSION */
+  }
 }
+showAppVersion();
 
 renderList();
 
