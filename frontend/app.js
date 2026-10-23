@@ -8,14 +8,14 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=18";
-import { computeTargets } from "./calc.js?v=18";
-import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=18";
+} from "./ai-chat.js?v=19";
+import { computeTargets } from "./calc.js?v=19";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=19";
 import {
   scanBarcodeFromImage,
   startBarcodeScanner,
   stopBarcodeScanner,
-} from "./barcode-scanner.js?v=18";
+} from "./barcode-scanner.js?v=19";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -23,9 +23,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=18";
+} from "./meals.js?v=19";
 
-const APP_VERSION = "18";
+const APP_VERSION = "19";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -356,6 +356,7 @@ async function openBarcodeScannerModal() {
   if (!els.barcodeModal) return;
   els.barcodeModal.hidden = false;
   document.body.classList.add("modal-open");
+  document.body.classList.add("barcode-scan-open");
   setBarcodeScanStatus("Открываем камеру…", true);
   await new Promise((r) => setTimeout(r, 350));
   await startBarcodeScanner(
@@ -374,7 +375,8 @@ async function openBarcodeScannerModal() {
 async function closeBarcodeScannerModal() {
   await stopBarcodeScanner();
   if (els.barcodeModal) els.barcodeModal.hidden = true;
-  document.body.classList.remove("modal-open");
+  document.body.classList.remove("barcode-scan-open");
+  if (els.modal.hidden) document.body.classList.remove("modal-open");
   setBarcodeScanStatus("", false);
 }
 

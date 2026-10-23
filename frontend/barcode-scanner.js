@@ -131,6 +131,11 @@ async function startHtml5Scanner(elementId, onSuccess, onStatus) {
  * @param {(err: Error) => void} onError
  * @param {(msg: string) => void} [onStatus]
  */
+async function tryStartHtml5(elementId, container, onSuccess, onStatus) {
+  container.innerHTML = "";
+  return await startHtml5Scanner(elementId, onSuccess, onStatus);
+}
+
 export async function startBarcodeScanner(elementId, onSuccess, onError, onStatus) {
   await stopBarcodeScanner();
 
@@ -145,7 +150,18 @@ export async function startBarcodeScanner(elementId, onSuccess, onError, onStatu
     return;
   }
 
+  const inTelegram = Boolean(window.Telegram?.WebApp?.initData);
   onStatus?.("Запрашиваем доступ к камере…");
+
+  // В Telegram WebView надёжнее html5-qrcode (видео в контейнере)
+  if (inTelegram) {
+    try {
+      activeSession = await tryStartHtml5(elementId, container, onSuccess, onStatus);
+      return;
+    } catch {
+      onStatus?.("Пробуем другой режим камеры…");
+    }
+  }
 
   try {
     activeSession = await startNativeScanner(container, onSuccess, onStatus);
@@ -158,8 +174,7 @@ export async function startBarcodeScanner(elementId, onSuccess, onError, onStatu
   }
 
   try {
-    container.innerHTML = "";
-    activeSession = await startHtml5Scanner(elementId, onSuccess, onStatus);
+    activeSession = await tryStartHtml5(elementId, container, onSuccess, onStatus);
   } catch (e) {
     const err =
       e instanceof Error

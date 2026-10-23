@@ -646,17 +646,36 @@ body {
   border-color: var(--accent);
 }
 
+/* Поверх окна «Добавить продукт» — иначе камера есть, а видео под другим модалом */
+#barcodeModal {
+  z-index: 250;
+}
+
 .barcode-reader {
-  min-height: 220px;
+  min-height: 260px;
   border-radius: 14px;
   overflow: hidden;
   background: #111;
   margin-bottom: 10px;
+  position: relative;
 }
 
-.barcode-reader video {
+.barcode-reader video,
+.barcode-reader canvas,
+.barcode-reader img {
+  display: block !important;
   width: 100% !important;
+  max-width: 100% !important;
+  min-height: 220px !important;
+  height: auto !important;
+  object-fit: cover !important;
   border-radius: 14px;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+#barcodeReader > div {
+  width: 100% !important;
 }
 
 .ai-disclaimer {
