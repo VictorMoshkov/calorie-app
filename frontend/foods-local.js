@@ -1,5 +1,7 @@
+import { EXTRA_LOCAL_FOODS } from "./foods-local-extra.js";
+
 /** Базовые продукты (ккал и БЖУ на 100 г). Дополняет Open Food Facts. */
-export const LOCAL_FOODS = [
+const CORE_LOCAL_FOODS = [
   { name: "Овсянка сухая", kcal100: 342, protein100: 12, fat100: 6, carbs100: 60, tags: ["овсян", "геркулес", "каша"] },
   { name: "Гречка варёная", kcal100: 110, protein100: 4.2, fat100: 1, carbs100: 21, tags: ["греч", "крупа"] },
   { name: "Рис белый варёный", kcal100: 130, protein100: 2.7, fat100: 0.3, carbs100: 28, tags: ["рис"] },
@@ -74,6 +76,8 @@ export const LOCAL_FOODS = [
   { name: "Вино красное", kcal100: 85, protein100: 0.1, fat100: 0, carbs100: 2.6, tags: ["вино"] },
 ];
 
+export const LOCAL_FOODS = [...CORE_LOCAL_FOODS, ...EXTRA_LOCAL_FOODS];
+
 export function searchLocalFoods(query) {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
@@ -82,7 +86,7 @@ export function searchLocalFoods(query) {
     const hay = `${item.name} ${(item.tags || []).join(" ")}`.toLowerCase();
     return hay.includes(q) || q.split(/\s+/).every((w) => hay.includes(w));
   })
-    .slice(0, 15)
+    .slice(0, 20)
     .map((item, i) => ({
       id: `local-${i}-${item.name}`,
       name: item.name,

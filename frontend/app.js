@@ -8,9 +8,10 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=14";
-import { computeTargets } from "./calc.js?v=14";
-import { searchFoods } from "./food-api.js?v=14";
+} from "./ai-chat.js?v=16";
+import { computeTargets } from "./calc.js?v=16";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=16";
+import { startBarcodeScanner, stopBarcodeScanner } from "./barcode-scanner.js?v=16";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -18,9 +19,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=14";
+} from "./meals.js?v=16";
 
-const APP_VERSION = "14";
+const APP_VERSION = "16";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -83,6 +84,13 @@ const els = {
   aiStatus: document.getElementById("aiStatus"),
   aiSendBtn: document.getElementById("aiSendBtn"),
   aiApiUrl: document.getElementById("aiApiUrl"),
+  scanBarcodeBtn: document.getElementById("scanBarcodeBtn"),
+  barcodeInput: document.getElementById("barcodeInput"),
+  barcodeLookupBtn: document.getElementById("barcodeLookupBtn"),
+  barcodeModal: document.getElementById("barcodeModal"),
+  barcodeModalBackdrop: document.getElementById("barcodeModalBackdrop"),
+  barcodeCloseBtn: document.getElementById("barcodeCloseBtn"),
+  barcodeScanStatus: document.getElementById("barcodeScanStatus"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
@@ -272,6 +280,8 @@ function closeFoodModal() {
   els.modal.hidden = true;
   clearSearchUi();
   productPer100 = null;
+  void stopBarcodeScanner();
+  if (els.barcodeModal) els.barcodeModal.hidden = true;
 }
 
 function clearSearchUi() {
@@ -306,6 +316,57 @@ function selectProductFromDb(product) {
   els.foodSearchResults.hidden = true;
   setSearchStatus(`Выбрано: ${product.name} (данные на 100 г)`, true);
   hapticSuccess();
+}
+
+function setBarcodeScanStatus(text, show = true) {
+  if (!els.barcodeScanStatus) return;
+  els.barcodeScanStatus.textContent = text;
+  els.barcodeScanStatus.hidden = !show || !text;
+}
+
+async function lookupBarcode(code) {
+  const digits = String(code).replace(/\D/g, "");
+  if (digits.length < 8) {
+    setSearchStatus("Введите штрихкод (8–14 цифр).");
+    return;
+  }
+  setSearchStatus("Ищем по штрихкоду в Open Food Facts…");
+  try {
+    const item = await fetchFoodByBarcode(digits);
+    if (!item) {
+      setSearchStatus("Продукт не найден в базе штрихкодов. Введите вручную.");
+      return;
+    }
+    selectProductFromDb(item);
+    setSearchStatus(`По штрихкоду: ${item.name}`, true);
+    if (els.barcodeInput) els.barcodeInput.value = digits;
+    els.foodSearch.value = digits;
+  } catch {
+    setSearchStatus("Ошибка поиска по штрихкоду. Проверьте интернет.");
+  }
+}
+
+async function openBarcodeScannerModal() {
+  if (!els.barcodeModal) return;
+  els.barcodeModal.hidden = false;
+  setBarcodeScanStatus("Запуск камеры…", true);
+  await startBarcodeScanner(
+    "barcodeReader",
+    async (code) => {
+      setBarcodeScanStatus("", false);
+      els.barcodeModal.hidden = true;
+      await lookupBarcode(code);
+    },
+    (err) => {
+      setBarcodeScanStatus(err.message || "Не удалось открыть камеру", true);
+    }
+  );
+}
+
+async function closeBarcodeScannerModal() {
+  await stopBarcodeScanner();
+  if (els.barcodeModal) els.barcodeModal.hidden = true;
+  setBarcodeScanStatus("", false);
 }
 
 async function runFoodSearch(query) {
@@ -426,8 +487,20 @@ els.modalBackdrop.addEventListener("click", closeFoodModal);
 els.foodSearch.addEventListener("input", () => {
   clearTimeout(searchTimer);
   const q = els.foodSearch.value;
+  const digits = q.replace(/\s/g, "");
+  if (/^\d{8,14}$/.test(digits)) {
+    searchTimer = setTimeout(() => lookupBarcode(digits), 300);
+    return;
+  }
   searchTimer = setTimeout(() => runFoodSearch(q), 450);
 });
+
+els.scanBarcodeBtn?.addEventListener("click", () => openBarcodeScannerModal());
+els.barcodeLookupBtn?.addEventListener("click", () =>
+  lookupBarcode(els.barcodeInput?.value || "")
+);
+els.barcodeCloseBtn?.addEventListener("click", () => closeBarcodeScannerModal());
+els.barcodeModalBackdrop?.addEventListener("click", () => closeBarcodeScannerModal());
 
 els.servingGrams.addEventListener("input", applyPortionFromBase);
 

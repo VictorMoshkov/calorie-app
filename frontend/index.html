@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Калькулятор калорий</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=14" />
+  <link rel="stylesheet" href="style.css?v=16" />
   <!-- Адрес API бота (обновите при смене cloudflared / Fly). Дублирует ai-api.json -->
   <script type="application/json" id="calorie-ai-api-config">
   {"apiBase":"https://casino-fragrance-nutritional-calculation.trycloudflare.com"}
@@ -85,6 +85,22 @@
     </section>
   </div>
 
+  <!-- Сканер штрихкода -->
+  <div class="modal" id="barcodeModal" hidden>
+    <div class="modal__backdrop" id="barcodeModalBackdrop"></div>
+    <div class="modal__sheet modal__sheet--scroll" role="dialog" aria-labelledby="barcodeTitle">
+      <div class="modal__sheet-head">
+        <h2 id="barcodeTitle">Штрихкод</h2>
+      </div>
+      <p class="modal__lead">Наведите камеру на полоски штрихкода на упаковке.</p>
+      <div id="barcodeReader" class="barcode-reader"></div>
+      <p class="search-status" id="barcodeScanStatus" hidden></p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="barcodeCloseBtn">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Модальное окно добавления еды -->
   <div class="modal" id="modal" hidden>
     <div class="modal__backdrop" id="modalBackdrop"></div>
@@ -94,9 +110,25 @@
       </div>
       <form id="foodForm">
         <label class="field">
-          <span>Поиск продукта (локальная база + Open Food Facts)</span>
-          <input type="search" id="foodSearch" placeholder="Например: творог, гречка" autocomplete="off" />
+          <span>Поиск (локальная база + Open Food Facts + штрихкод)</span>
+          <input type="search" id="foodSearch" placeholder="Творог, гречка или 4607034471512" autocomplete="off" />
         </label>
+        <div class="barcode-tools">
+          <button type="button" class="btn btn--outline btn--block" id="scanBarcodeBtn">
+            Сканировать штрихкод
+          </button>
+          <div class="barcode-manual">
+            <input
+              type="text"
+              id="barcodeInput"
+              inputmode="numeric"
+              placeholder="Штрихкод EAN"
+              autocomplete="off"
+              aria-label="Штрихкод"
+            />
+            <button type="button" class="btn btn--primary" id="barcodeLookupBtn">Найти</button>
+          </div>
+        </div>
         <p class="search-status" id="searchStatus" hidden></p>
         <ul class="search-results" id="foodSearchResults" hidden></ul>
         <label class="field">
@@ -249,6 +281,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=14"></script>
+  <script type="module" src="app.js?v=16"></script>
 </body>
 </html>

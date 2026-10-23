@@ -612,6 +612,53 @@ body {
   background: var(--bg-accent);
 }
 
+.barcode-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: -4px 0 12px;
+}
+
+.btn--block {
+  width: 100%;
+  justify-content: center;
+}
+
+.barcode-manual {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+
+.barcode-manual input {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  outline: none;
+}
+
+.barcode-manual input:focus {
+  border-color: var(--accent);
+}
+
+.barcode-reader {
+  min-height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #111;
+  margin-bottom: 10px;
+}
+
+.barcode-reader video {
+  width: 100% !important;
+  border-radius: 14px;
+}
+
 .ai-disclaimer {
   margin-top: -4px;
   font-size: 0.78rem;

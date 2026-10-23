@@ -9,6 +9,13 @@ const OFF_URLS = [
   "https://world.openfoodfacts.org/cgi/search.pl",
 ];
 
+const OFF_PRODUCT_API = [
+  "https://world.openfoodfacts.org/api/v2/product",
+  "https://ru.openfoodfacts.org/api/v2/product",
+];
+
+const BARCODE_RE = /^\d{8,14}$/;
+
 function num(value) {
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
@@ -68,7 +75,7 @@ async function searchOpenFoodFacts(query) {
     search_simple: "1",
     action: "process",
     json: "1",
-    page_size: "15",
+    page_size: "24",
     lc: "ru",
     fields: "code,product_name,generic_name,brands,nutriments",
   });
@@ -111,10 +118,42 @@ function dedupeByName(items) {
 }
 
 /**
+ * Поиск упакованного товара по штрихкоду (EAN-13 и др.) в Open Food Facts.
+ * @param {string} barcode
+ */
+export async function fetchFoodByBarcode(barcode) {
+  const code = String(barcode).replace(/\D/g, "");
+  if (!BARCODE_RE.test(code)) return null;
+
+  for (const base of OFF_PRODUCT_API) {
+    try {
+      const res = await fetch(`${base}/${code}.json`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data.status !== 1 || !data.product) continue;
+      const item = normalizeProduct(data.product);
+      if (item) {
+        return { ...item, id: `barcode-${code}`, source: "barcode" };
+      }
+    } catch {
+      /* next */
+    }
+  }
+  return null;
+}
+
+/**
  * @param {string} query
  */
 export async function searchFoods(query) {
   const q = query.trim();
+  const digits = q.replace(/\s/g, "");
+  if (BARCODE_RE.test(digits)) {
+    const byCode = await fetchFoodByBarcode(digits);
+    return byCode ? [byCode] : [];
+  }
   if (q.length < 2) return [];
 
   const local = searchLocalFoods(q);
