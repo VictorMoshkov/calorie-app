@@ -86,7 +86,7 @@ export function searchLocalFoods(query) {
     const hay = `${item.name} ${(item.tags || []).join(" ")}`.toLowerCase();
     return hay.includes(q) || q.split(/\s+/).every((w) => hay.includes(w));
   })
-    .slice(0, 20)
+    .slice(0, 25)
     .map((item, i) => ({
       id: `local-${i}-${item.name}`,
       name: item.name,

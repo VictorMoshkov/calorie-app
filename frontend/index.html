@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Калькулятор калорий</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=19" />
+  <link rel="stylesheet" href="style.css?v=20" />
   <!-- Адрес API бота (обновите при смене cloudflared / Fly). Дублирует ai-api.json -->
   <script type="application/json" id="calorie-ai-api-config">
   {"apiBase":"https://casino-fragrance-nutritional-calculation.trycloudflare.com"}
@@ -88,7 +88,7 @@
   <!-- Сканер штрихкода -->
   <div class="modal" id="barcodeModal" hidden>
     <div class="modal__backdrop" id="barcodeModalBackdrop"></div>
-    <div class="modal__sheet modal__sheet--scroll" role="dialog" aria-labelledby="barcodeTitle">
+    <div class="modal__sheet modal__sheet--scroll modal__sheet--barcode" role="dialog" aria-labelledby="barcodeTitle">
       <div class="modal__sheet-head">
         <h2 id="barcodeTitle">Штрихкод</h2>
       </div>
@@ -287,6 +287,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=19"></script>
+  <script type="module" src="app.js?v=20"></script>
 </body>
 </html>

@@ -37,7 +37,13 @@ function round1(v) {
 /** @param {Record<string, unknown>} raw */
 export function normalizeProduct(raw) {
   const n = raw.nutriments || {};
-  const name = String(raw.product_name || raw.generic_name || "").trim();
+  const name = String(
+    raw.product_name_ru ||
+      raw.product_name ||
+      raw.generic_name_ru ||
+      raw.generic_name ||
+      ""
+  ).trim();
   if (!name) return null;
 
   const brand = raw.brands ? String(raw.brands).split(",")[0].trim() : "";
@@ -67,6 +73,43 @@ export function normalizeProduct(raw) {
     carbs100,
     source: "off",
   };
+}
+
+async function searchOpenFoodFactsV2(query) {
+  const fields =
+    "code,product_name,product_name_ru,generic_name,generic_name_ru,brands,nutriments";
+  const bases = [
+    "https://ru.openfoodfacts.org/api/v2/search",
+    "https://world.openfoodfacts.org/api/v2/search",
+  ];
+
+  /** @type {ReturnType<typeof normalizeProduct>[]} */
+  const found = [];
+
+  for (const base of bases) {
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        page_size: "30",
+        fields,
+        lc: "ru",
+      });
+      const res = await fetch(`${base}?${params}`, {
+        headers: { Accept: "application/json" },
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      const list = Array.isArray(data.products) ? data.products : [];
+      for (const raw of list) {
+        const item = normalizeProduct(raw);
+        if (item) found.push(item);
+      }
+      if (found.length >= 15) break;
+    } catch {
+      /* next */
+    }
+  }
+  return found;
 }
 
 async function searchOpenFoodFacts(query) {
@@ -157,13 +200,10 @@ export async function searchFoods(query) {
   if (q.length < 2) return [];
 
   const local = searchLocalFoods(q);
-  let off = [];
+  const [offClassic, offV2] = await Promise.all([
+    searchOpenFoodFacts(q).catch(() => []),
+    searchOpenFoodFactsV2(q).catch(() => []),
+  ]);
 
-  try {
-    off = await searchOpenFoodFacts(q);
-  } catch {
-    off = [];
-  }
-
-  return dedupeByName([...local, ...off]).slice(0, 25);
+  return dedupeByName([...local, ...offClassic, ...offV2]).slice(0, 40);
 }
