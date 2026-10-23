@@ -8,9 +8,9 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=13";
-import { computeTargets } from "./calc.js?v=13";
-import { searchFoods } from "./food-api.js?v=13";
+} from "./ai-chat.js?v=14";
+import { computeTargets } from "./calc.js?v=14";
+import { searchFoods } from "./food-api.js?v=14";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -18,9 +18,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=13";
+} from "./meals.js?v=14";
 
-const APP_VERSION = "13";
+const APP_VERSION = "14";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";

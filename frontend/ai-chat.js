@@ -9,6 +9,29 @@ let cachedFromFile = null;
 /** @type {Promise<void> | null} */
 let configLoadPromise = null;
 
+function readInlineAiConfig() {
+  const el = document.getElementById("calorie-ai-api-config");
+  if (!el?.textContent?.trim()) return "";
+  try {
+    const data = JSON.parse(el.textContent);
+    return String(data.apiBase || data.api || "")
+      .trim()
+      .replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+}
+
+function aiApiJsonUrl() {
+  const path = window.location.pathname || "/";
+  const basePath = path.includes("/calorie-app")
+    ? "/calorie-app/ai-api.json"
+    : new URL("ai-api.json", window.location.origin + path.replace(/\/?$/, "/")).href;
+  return typeof basePath === "string" && basePath.startsWith("http")
+    ? basePath
+    : `${window.location.origin}${basePath}`;
+}
+
 export function saveAiApiBase(url) {
   const base = (url || "").trim().replace(/\/$/, "");
   try {
@@ -33,6 +56,11 @@ export function resolveAiApiBase() {
   } catch {
     /* ignore */
   }
+  const inline = readInlineAiConfig();
+  if (inline) {
+    saveAiApiBase(inline);
+    return inline;
+  }
   return cachedFromFile || "";
 }
 
@@ -41,8 +69,7 @@ export function loadAiApiConfig() {
   if (!configLoadPromise) {
     configLoadPromise = (async () => {
       try {
-        const configUrl = new URL("ai-api.json", window.location.href);
-        configUrl.searchParams.set("t", String(Date.now()).slice(0, 8));
+        const configUrl = `${aiApiJsonUrl()}?t=${Date.now()}`;
         const res = await fetch(configUrl, { cache: "no-store" });
         if (!res.ok) return;
         const data = await res.json();

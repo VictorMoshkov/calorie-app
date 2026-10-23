@@ -78,15 +78,17 @@ fly launch --no-deploy
 Задайте секреты (подставьте свои значения):
 
 ```powershell
-fly secrets set BOT_TOKEN="ваш_токен_от_BotFather" WEBAPP_URL="https://ВАШ_ЛОГИН.github.io/calorie-app/?v=12&api=https://calorie-bot.fly.dev" GROQ_API_KEY="ключ_с_console.groq.com"
+fly secrets set BOT_TOKEN="ваш_токен" WEBAPP_URL="https://ВАШ_ЛОГИН.github.io/calorie-app/?v=14" PUBLIC_API_URL="https://calorie-bot.fly.dev" AI_PROVIDER="gemini" GEMINI_API_KEY="ваш_ключ"
 fly deploy
 ```
+
+Подробнее (ИИ, `ai-api.json`, телефон): **FLY-24-7.md**
 
 ---
 
 ## Часть 4 — BotFather
 
-**Configure Mini App** → тот же URL, что `WEBAPP_URL`.
+**Configure Mini App** → тот же URL, что `WEBAPP_URL` (сейчас с `?v=14`).
 
 ---
 
