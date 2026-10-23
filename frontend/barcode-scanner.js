@@ -39,8 +39,8 @@ async function startNativeScanner(container, onSuccess, onStatus) {
   video.muted = true;
   video.autoplay = true;
   video.style.width = "100%";
-  video.style.maxHeight = "168px";
-  video.style.height = "168px";
+  video.style.maxHeight = "128px";
+  video.style.height = "128px";
   video.style.objectFit = "cover";
   video.srcObject = stream;
   container.appendChild(video);
@@ -104,7 +104,14 @@ async function startHtml5Scanner(elementId, onSuccess, onStatus) {
 
   await html5Scanner.start(
     { facingMode: "environment" },
-    { fps: 8, qrbox: { width: 220, height: 88 }, aspectRatio: 1.777 },
+    {
+      fps: 8,
+      aspectRatio: 1.777,
+      qrbox: (w, h) => ({
+        width: Math.floor(Math.min(w * 0.92, 280)),
+        height: Math.floor(Math.min(h * 0.55, 72)),
+      }),
+    },
     (decoded) => {
       const raw = digitsOnly(decoded);
       if (raw.length >= 8) onSuccess(raw);

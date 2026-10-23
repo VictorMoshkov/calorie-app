@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>Калькулятор калорий</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="stylesheet" href="style.css?v=21" />
   <!-- Адрес API бота (обновите при смене cloudflared / Fly). Дублирует ai-api.json -->
   <script type="application/json" id="calorie-ai-api-config">
   {"apiBase":"https://casino-fragrance-nutritional-calculation.trycloudflare.com"}
@@ -88,22 +88,16 @@
   <!-- Сканер штрихкода -->
   <div class="modal" id="barcodeModal" hidden>
     <div class="modal__backdrop" id="barcodeModalBackdrop"></div>
-    <div class="modal__sheet modal__sheet--scroll modal__sheet--barcode" role="dialog" aria-labelledby="barcodeTitle">
-      <div class="modal__sheet-head">
-        <h2 id="barcodeTitle">Штрихкод</h2>
-      </div>
-      <p class="modal__lead">
-        Снимайте штрихкод на <strong>упаковке</strong>. Со скриншота на экране камера часто не срабатывает — используйте «Фото» ниже.
-      </p>
-      <div id="barcodeReader" class="barcode-reader"></div>
-      <p class="search-status" id="barcodeScanStatus" hidden></p>
-      <button type="button" class="btn btn--outline btn--block" id="barcodePhotoBtn">
-        Фото со штрихкодом
-      </button>
-      <input type="file" id="barcodePhotoInput" accept="image/*" hidden />
-      <div class="modal__actions">
+    <div class="modal__sheet modal__sheet--barcode" role="dialog" aria-labelledby="barcodeTitle">
+      <h2 class="barcode-modal__title" id="barcodeTitle">Штрихкод</h2>
+      <p class="barcode-modal__hint">Наведите на полоски на упаковке. Для скрина — «Фото».</p>
+      <div id="barcodeReader" class="barcode-reader" aria-hidden="false"></div>
+      <p class="barcode-modal__status" id="barcodeScanStatus" hidden></p>
+      <div class="barcode-modal__actions">
+        <button type="button" class="btn btn--outline" id="barcodePhotoBtn">Фото</button>
         <button type="button" class="btn btn--ghost" id="barcodeCloseBtn">Закрыть</button>
       </div>
+      <input type="file" id="barcodePhotoInput" accept="image/*" hidden />
     </div>
   </div>
 
@@ -287,6 +281,6 @@
     </div>
   </div>
 
-  <script type="module" src="app.js?v=20"></script>
+  <script type="module" src="app.js?v=21"></script>
 </body>
 </html>

@@ -8,14 +8,14 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=20";
-import { computeTargets } from "./calc.js?v=20";
-import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=20";
+} from "./ai-chat.js?v=21";
+import { computeTargets } from "./calc.js?v=21";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=21";
 import {
   scanBarcodeFromImage,
   startBarcodeScanner,
   stopBarcodeScanner,
-} from "./barcode-scanner.js?v=20";
+} from "./barcode-scanner.js?v=21";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -23,9 +23,9 @@ import {
   formatMealTimeRange,
   foodEatenAtMs,
   foodsForToday,
-} from "./meals.js?v=20";
+} from "./meals.js?v=21";
 
-const APP_VERSION = "20";
+const APP_VERSION = "21";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
