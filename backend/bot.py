@@ -153,6 +153,7 @@ async def main() -> None:
         print("ИИ: задайте Gemini (aistudio.google.com/apikey) или Groq в .env.")
     if PUBLIC_API_URL:
         print(f"Mini App API: {PUBLIC_API_URL}")
+    print(f"Mini App URL: {effective_webapp_url()}")
     print("Бот запущен. Нажми Ctrl+C чтобы остановить.")
     try:
         await dp.start_polling(bot)
