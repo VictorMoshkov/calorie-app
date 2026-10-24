@@ -63,16 +63,11 @@ body {
   margin-bottom: 18px;
 }
 
-.header__row {
+.header__top {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-}
-
-.header__main {
-  flex: 1;
-  min-width: 0;
 }
 
 .header__actions {
@@ -86,12 +81,18 @@ body {
 .day-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 4px;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 0 4px;
+  width: 100%;
+  max-width: 280px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .day-nav__center {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   text-align: center;
 }

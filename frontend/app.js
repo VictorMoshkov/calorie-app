@@ -8,20 +8,20 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=24";
-import { computeTargets } from "./calc.js?v=24";
-import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=24";
+} from "./ai-chat.js?v=25";
+import { computeTargets } from "./calc.js?v=25";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=25";
 import {
   scanBarcodeFromImage,
   startBarcodeScanner,
   stopBarcodeScanner,
-} from "./barcode-scanner.js?v=24";
+} from "./barcode-scanner.js?v=25";
 import {
   addDaysToKey,
   formatDayLabel,
   isFutureKey,
   todayKey,
-} from "./date-utils.js?v=24";
+} from "./date-utils.js?v=25";
 import {
   buildMealGroups,
   defaultTimeString,
@@ -30,7 +30,7 @@ import {
   foodEatenAtMs,
   foodsForDateKey,
   foodsForToday,
-} from "./meals.js?v=24";
+} from "./meals.js?v=25";
 import {
   dailyCaloriesSeries,
   loadWeightLog,
@@ -38,12 +38,12 @@ import {
   saveWeightForDay,
   weightForDay,
   weightSeries,
-} from "./stats.js?v=24";
+} from "./stats.js?v=25";
 
 /** Включить кнопку «ИИ» и чат в Mini App (нужен PUBLIC_API_URL / cloudflared). */
 const FEATURE_AI_CHAT = false;
 
-const APP_VERSION = "24";
+const APP_VERSION = "25";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
