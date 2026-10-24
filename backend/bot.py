@@ -14,6 +14,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     WebAppInfo,
+    MenuButtonWebApp,
 )
 from aiogram.client.session.aiohttp import AiohttpSession
 from dotenv import load_dotenv
@@ -137,11 +138,27 @@ async def verify_telegram() -> None:
         raise SystemExit(1) from e
 
 
+async def sync_menu_button() -> None:
+    """Кнопка меню в чате (как в BotFather) — из WEBAPP_URL, без ручного ввода."""
+    url = effective_webapp_url()
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="Калькулятор",
+                web_app=WebAppInfo(url=url),
+            )
+        )
+        print("Кнопка меню Telegram обновлена (Mini App).")
+    except Exception as e:
+        print(f"Не удалось обновить кнопку меню: {e}")
+
+
 async def main() -> None:
     if PROXY_URL:
         print(f"Прокси: {PROXY_URL}")
 
     await verify_telegram()
+    await sync_menu_button()
 
     from api_server import start_api_server
 

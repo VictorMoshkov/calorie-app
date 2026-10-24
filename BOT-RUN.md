@@ -36,7 +36,7 @@ cd C:\Users\grot-\OneDrive\Desktop\calorie-app
 git push
 ```
 
-**BotFather Mini App:** `https://victormoshkov.github.io/calorie-app/?v=19`  
+**Mini App URL** — в `backend/.env` (`WEBAPP_URL=?v=…`). При запуске бот сам обновляет кнопку меню в Telegram. BotFather вручную нужен только один раз при создании бота.  
 В Telegram: **/start**
 
 ## Проверка
