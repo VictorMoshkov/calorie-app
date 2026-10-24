@@ -1,0 +1,12 @@
+# Запуск на VPS: docker compose up -d --build
+# Порт 8080 только на localhost — снаружи HTTPS через nginx (см. VPS-RU-24-7.md)
+
+services:
+  bot:
+    build: .
+    container_name: calorie-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8080:8080"

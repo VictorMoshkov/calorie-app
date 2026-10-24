@@ -10,14 +10,25 @@ export function foodEatenAtMs(food) {
   return Date.now();
 }
 
-export function isSameLocalDay(ms) {
+export function isSameLocalDay(ms, refDate = new Date()) {
   const d = new Date(ms);
-  const n = new Date();
+  const n = refDate;
   return (
     d.getFullYear() === n.getFullYear() &&
     d.getMonth() === n.getMonth() &&
     d.getDate() === n.getDate()
   );
+}
+
+/** @param {string} dateKey YYYY-MM-DD */
+export function foodsForDateKey(foods, dateKey) {
+  return foods.filter((f) => {
+    const d = new Date(foodEatenAtMs(f));
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}` === dateKey;
+  });
 }
 
 export function foodsForToday(foods) {
@@ -77,11 +88,14 @@ export function formatMealTimeRange(start, end) {
   return `${formatTime(start)}–${formatTime(end)}`;
 }
 
-/** Собрать ISO для сегодня + время HH:mm */
-export function eatenAtFromTimeString(timeStr) {
+/** Собрать ISO для дня dateKey (YYYY-MM-DD) + время HH:mm */
+export function eatenAtFromTimeString(timeStr, dateKey) {
   const [h, m] = timeStr.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
+  const [y, mo, day] = (dateKey || "").split("-").map(Number);
+  const d = dateKey
+    ? new Date(y, mo - 1, day, h, m, 0, 0)
+    : new Date();
+  if (!dateKey) d.setHours(h, m, 0, 0);
   return d.toISOString();
 }
 

@@ -70,10 +70,149 @@ body {
   gap: 12px;
 }
 
+.header__main {
+  flex: 1;
+  min-width: 0;
+}
+
 .header__actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.day-nav__center {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.day-nav h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.day-nav__weight {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.day-nav__btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.day-nav__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.stats-block {
+  margin-bottom: 20px;
+}
+
+.stats-block__title {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+}
+
+.stats-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 6px;
+  min-height: 140px;
+  padding: 8px 4px 0;
+  background: var(--bg-accent);
+  border-radius: var(--radius);
+}
+
+.stats-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+
+.stats-bar-col__val {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.stats-bar-col__track {
+  width: 100%;
+  max-width: 28px;
+  height: 88px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.stats-bar-col__fill {
+  width: 100%;
+  border-radius: 6px 6px 2px 2px;
+  background: var(--accent);
+  min-height: 4px;
+}
+
+.stats-bar-col__fill--over {
+  background: var(--danger);
+}
+
+.stats-bar-col__label {
+  margin-top: 6px;
+  font-size: 0.62rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.stats-legend {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.stats-weight-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+}
+
+.stats-weight-row strong {
+  color: var(--accent);
 }
 
 .btn--outline {

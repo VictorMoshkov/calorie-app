@@ -73,8 +73,7 @@ async def cmd_start(message: Message) -> None:
     await message.answer(
         "Привет! 👋\n\n"
         "Это <b>Калькулятор калорий</b> — Mini App для учёта еды и БЖУ.\n\n"
-        "Нажми кнопку ниже, чтобы открыть приложение.\n\n"
-        "Вопросы по питанию: кнопка <b>ИИ</b> в приложении или команда /ask",
+        "Нажми кнопку ниже, чтобы открыть приложение.",
         reply_markup=webapp_keyboard(),
         parse_mode="HTML",
     )
@@ -117,14 +116,32 @@ async def cmd_ask(message: Message) -> None:
 async def any_text(message: Message) -> None:
     """На любое другое сообщение снова предлагаем открыть Mini App."""
     await message.answer(
-        "Открой калькулятор кнопкой ниже или спроси ИИ: /ask ваш вопрос",
+        "Открой калькулятор кнопкой ниже.",
         reply_markup=webapp_keyboard(),
     )
+
+
+async def verify_telegram() -> None:
+    """Проверка до polling: без api.telegram.org /start не отвечает."""
+    try:
+        me = await asyncio.wait_for(bot.get_me(), timeout=30)
+        print(f"Telegram: бот @{me.username} (id {me.id})")
+    except Exception as e:
+        print(
+            "\n❌ Нет связи с Telegram (api.telegram.org).\n"
+            "   • Включите NashVPN (полный режим, не только браузер) и перезапустите бот\n"
+            "   • Или добавьте в .env PROXY_URL=socks5://... (если есть SOCKS от VPN)\n"
+            "   • Проверка: curl.exe -4 --max-time 15 https://api.telegram.org\n"
+            f"   Ошибка: {e}\n"
+        )
+        raise SystemExit(1) from e
 
 
 async def main() -> None:
     if PROXY_URL:
         print(f"Прокси: {PROXY_URL}")
+
+    await verify_telegram()
 
     from api_server import start_api_server
 

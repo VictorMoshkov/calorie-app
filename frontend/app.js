@@ -8,24 +8,42 @@ import {
   saveAiApiBase,
   loadAiApiConfig,
   ensureAiApiBase,
-} from "./ai-chat.js?v=21";
-import { computeTargets } from "./calc.js?v=21";
-import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=21";
+} from "./ai-chat.js?v=23";
+import { computeTargets } from "./calc.js?v=23";
+import { fetchFoodByBarcode, searchFoods } from "./food-api.js?v=23";
 import {
   scanBarcodeFromImage,
   startBarcodeScanner,
   stopBarcodeScanner,
-} from "./barcode-scanner.js?v=21";
+} from "./barcode-scanner.js?v=23";
+import {
+  addDaysToKey,
+  formatDayLabel,
+  isFutureKey,
+  todayKey,
+} from "./date-utils.js?v=23";
 import {
   buildMealGroups,
   defaultTimeString,
   eatenAtFromTimeString,
   formatMealTimeRange,
   foodEatenAtMs,
+  foodsForDateKey,
   foodsForToday,
-} from "./meals.js?v=21";
+} from "./meals.js?v=23";
+import {
+  dailyCaloriesSeries,
+  loadWeightLog,
+  maxKcalInSeries,
+  saveWeightForDay,
+  weightForDay,
+  weightSeries,
+} from "./stats.js?v=23";
 
-const APP_VERSION = "21";
+/** Включить кнопку «ИИ» и чат в Mini App (нужен PUBLIC_API_URL / cloudflared). */
+const FEATURE_AI_CHAT = false;
+
+const APP_VERSION = "23";
 
 const STORAGE_FOODS = "calorie-app-foods";
 const STORAGE_PROFILE = "calorie-app-profile";
@@ -97,6 +115,18 @@ const els = {
   barcodeScanStatus: document.getElementById("barcodeScanStatus"),
   barcodePhotoBtn: document.getElementById("barcodePhotoBtn"),
   barcodePhotoInput: document.getElementById("barcodePhotoInput"),
+  dayTitle: document.getElementById("dayTitle"),
+  dayWeightLine: document.getElementById("dayWeightLine"),
+  dayPrevBtn: document.getElementById("dayPrevBtn"),
+  dayNextBtn: document.getElementById("dayNextBtn"),
+  statsBtn: document.getElementById("statsBtn"),
+  statsModal: document.getElementById("statsModal"),
+  statsBackdrop: document.getElementById("statsBackdrop"),
+  statsCloseBtn: document.getElementById("statsCloseBtn"),
+  statsKcalBars: document.getElementById("statsKcalBars"),
+  statsKcalLegend: document.getElementById("statsKcalLegend"),
+  statsWeightList: document.getElementById("statsWeightList"),
+  statsWeightEmpty: document.getElementById("statsWeightEmpty"),
 };
 
 /** @type {{ id: string, name: string, calories: number, protein: number, fat: number, carbs: number }[]} */
@@ -108,6 +138,7 @@ let productPer100 = null;
 let searchTimer = null;
 /** @type {{ role: 'user' | 'assistant', content: string }[]} */
 let aiHistory = [];
+let selectedDateKey = todayKey();
 
 function loadFoods() {
   try {
@@ -149,8 +180,12 @@ function getTodayFoods() {
   return foodsForToday(foods);
 }
 
+function getSelectedFoods() {
+  return foodsForDateKey(foods, selectedDateKey);
+}
+
 function getDayTotals() {
-  return getTodayFoods().reduce(
+  return getSelectedFoods().reduce(
     (acc, f) => {
       acc.calories += f.calories;
       acc.protein += f.protein;
@@ -218,11 +253,32 @@ function mealTotals(mealFoods) {
   );
 }
 
-function renderList() {
-  const today = getTodayFoods();
-  els.mealGroups.innerHTML = "";
+function updateDayChrome() {
+  if (!els.dayTitle) return;
+  els.dayTitle.textContent = formatDayLabel(selectedDateKey);
+  const log = loadWeightLog();
+  const w = weightForDay(log, selectedDateKey, profile?.weightKg ?? null);
+  if (w != null && els.dayWeightLine) {
+    els.dayWeightLine.hidden = false;
+    els.dayWeightLine.textContent = `Вес: ${w} кг`;
+  } else if (els.dayWeightLine) {
+    els.dayWeightLine.hidden = true;
+  }
+  if (els.dayNextBtn) {
+    els.dayNextBtn.disabled = selectedDateKey >= todayKey();
+  }
+  if (els.addFoodBtn) {
+    const future = isFutureKey(selectedDateKey);
+    els.addFoodBtn.disabled = future;
+  }
+}
 
-  const groups = buildMealGroups(today);
+function renderList() {
+  const dayFoods = getSelectedFoods();
+  els.mealGroups.innerHTML = "";
+  updateDayChrome();
+
+  const groups = buildMealGroups(dayFoods);
 
   groups.forEach((meal) => {
     const section = document.createElement("section");
@@ -265,11 +321,17 @@ function renderList() {
     els.mealGroups.appendChild(section);
   });
 
-  els.emptyState.hidden = today.length > 0;
+  els.emptyState.hidden = dayFoods.length > 0;
+  if (dayFoods.length === 0 && selectedDateKey !== todayKey()) {
+    els.emptyState.textContent = "За этот день записей нет.";
+  } else if (dayFoods.length === 0) {
+    els.emptyState.textContent = "Пока пусто. Добавьте первый продукт.";
+  }
   updateTotals();
 }
 
 function openFoodModal() {
+  if (isFutureKey(selectedDateKey)) return;
   els.modal.hidden = false;
   els.foodForm.reset();
   els.foodForm.elements.protein.value = "0";
@@ -507,6 +569,78 @@ function numOrNull(v) {
   return v === "" || Number.isNaN(n) ? null : n;
 }
 
+function shiftSelectedDay(delta) {
+  const next = addDaysToKey(selectedDateKey, delta);
+  if (isFutureKey(next)) return;
+  selectedDateKey = next;
+  renderList();
+  if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+}
+
+els.dayPrevBtn?.addEventListener("click", () => shiftSelectedDay(-1));
+els.dayNextBtn?.addEventListener("click", () => shiftSelectedDay(1));
+
+function renderStatsContent() {
+  const targetKcal = targets?.calories ?? null;
+  const series = dailyCaloriesSeries(foods, 7, targetKcal);
+  const maxK = maxKcalInSeries(series);
+  if (els.statsKcalBars) {
+    els.statsKcalBars.innerHTML = series
+      .map((row) => {
+        const h = Math.max(4, Math.round((row.kcal / maxK) * 100));
+        const over = targetKcal && row.kcal > targetKcal;
+        return `<div class="stats-bar-col">
+          <span class="stats-bar-col__val">${row.kcal}</span>
+          <div class="stats-bar-col__track">
+            <div class="stats-bar-col__fill${over ? " stats-bar-col__fill--over" : ""}" style="height:${h}%"></div>
+          </div>
+          <span class="stats-bar-col__label">${row.label}</span>
+        </div>`;
+      })
+      .join("");
+  }
+  if (els.statsKcalLegend) {
+    if (targetKcal) {
+      els.statsKcalLegend.hidden = false;
+      els.statsKcalLegend.textContent = `Линия нормы: ${targetKcal} ккал/день`;
+    } else {
+      els.statsKcalLegend.hidden = true;
+    }
+  }
+
+  const log = loadWeightLog();
+  let wRows = weightSeries(log, 14);
+  const todayW = weightForDay(log, todayKey(), profile?.weightKg ?? null);
+  if (todayW != null && !wRows.some((r) => r.key === todayKey())) {
+    wRows = [...wRows, { key: todayKey(), kg: todayW }];
+    wRows.sort((a, b) => a.key.localeCompare(b.key));
+  }
+  if (els.statsWeightList) {
+    els.statsWeightList.innerHTML = wRows
+      .map(
+        (r) =>
+          `<div class="stats-weight-row"><span>${formatDayLabel(r.key)}</span><strong>${r.kg} кг</strong></div>`
+      )
+      .join("");
+  }
+  if (els.statsWeightEmpty) {
+    els.statsWeightEmpty.hidden = wRows.length > 0;
+  }
+}
+
+function openStatsModal() {
+  renderStatsContent();
+  els.statsModal.hidden = false;
+}
+
+function closeStatsModal() {
+  els.statsModal.hidden = true;
+}
+
+els.statsBtn?.addEventListener("click", openStatsModal);
+els.statsCloseBtn?.addEventListener("click", closeStatsModal);
+els.statsBackdrop?.addEventListener("click", closeStatsModal);
+
 els.addFoodBtn.addEventListener("click", openFoodModal);
 els.cancelBtn.addEventListener("click", closeFoodModal);
 els.modalBackdrop.addEventListener("click", closeFoodModal);
@@ -550,7 +684,10 @@ els.foodForm.addEventListener("submit", (e) => {
     protein: Number(data.get("protein")) || 0,
     fat: Number(data.get("fat")) || 0,
     carbs: Number(data.get("carbs")) || 0,
-    eatenAt: eatenAtFromTimeString(String(data.get("eatenTime"))),
+    eatenAt: eatenAtFromTimeString(
+      String(data.get("eatenTime")),
+      selectedDateKey
+    ),
   });
 
   saveFoods();
@@ -561,7 +698,9 @@ els.foodForm.addEventListener("submit", (e) => {
 
 els.profileForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  saveProfile(profileFromForm());
+  const next = profileFromForm();
+  saveProfile(next);
+  saveWeightForDay(todayKey(), next.weightKg);
   if (els.aiApiUrl) saveAiApiBase(els.aiApiUrl.value);
   renderList();
   closeProfileModal();
@@ -687,12 +826,23 @@ async function submitAiQuestion(e) {
   }
 }
 
-els.aiChatBtn.addEventListener("click", openAiModal);
-els.aiCloseBtn.addEventListener("click", closeAiModal);
-els.aiBackdrop.addEventListener("click", closeAiModal);
-els.aiForm.addEventListener("submit", submitAiQuestion);
+function applyFeatureToggles() {
+  if (!FEATURE_AI_CHAT) {
+    if (els.aiChatBtn) els.aiChatBtn.hidden = true;
+    const aiProfile = document.getElementById("aiProfileBlock");
+    if (aiProfile) aiProfile.hidden = true;
+  }
+}
 
-loadAiApiConfig();
+if (FEATURE_AI_CHAT) {
+  els.aiChatBtn?.addEventListener("click", openAiModal);
+  els.aiCloseBtn?.addEventListener("click", closeAiModal);
+  els.aiBackdrop?.addEventListener("click", closeAiModal);
+  els.aiForm?.addEventListener("submit", submitAiQuestion);
+  loadAiApiConfig();
+}
+
+applyFeatureToggles();
 
 async function showAppVersion() {
   if (!els.appVersion) return;
@@ -709,6 +859,11 @@ async function showAppVersion() {
   }
 }
 showAppVersion();
+
+if (profile?.weightKg != null) {
+  const log = loadWeightLog();
+  if (log[todayKey()] == null) saveWeightForDay(todayKey(), profile.weightKg);
+}
 
 renderList();
 

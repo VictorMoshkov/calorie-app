@@ -1,4 +1,5 @@
 import { EXTRA_LOCAL_FOODS } from "./foods-local-extra.js";
+import { PACK_RU_FOODS } from "./foods-pack-ru.js";
 
 /** Базовые продукты (ккал и БЖУ на 100 г). Дополняет Open Food Facts. */
 const CORE_LOCAL_FOODS = [
@@ -76,7 +77,7 @@ const CORE_LOCAL_FOODS = [
   { name: "Вино красное", kcal100: 85, protein100: 0.1, fat100: 0, carbs100: 2.6, tags: ["вино"] },
 ];
 
-export const LOCAL_FOODS = [...CORE_LOCAL_FOODS, ...EXTRA_LOCAL_FOODS];
+export const LOCAL_FOODS = [...CORE_LOCAL_FOODS, ...EXTRA_LOCAL_FOODS, ...PACK_RU_FOODS];
 
 export function searchLocalFoods(query) {
   const q = query.trim().toLowerCase();
@@ -86,7 +87,7 @@ export function searchLocalFoods(query) {
     const hay = `${item.name} ${(item.tags || []).join(" ")}`.toLowerCase();
     return hay.includes(q) || q.split(/\s+/).every((w) => hay.includes(w));
   })
-    .slice(0, 25)
+    .slice(0, 30)
     .map((item, i) => ({
       id: `local-${i}-${item.name}`,
       name: item.name,
